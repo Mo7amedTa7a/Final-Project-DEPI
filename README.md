@@ -1,18 +1,66 @@
-# React + Vite
+# CureTap Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+واجهة مشروع **CureTap** — منصة متكاملة لتنظيم مواعيد الأطباء، الاستشارات الطبية بالفيديو، وطلب الأدوية من الصيدليات في مكان واحد.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
+- **React.js** (Create React App)
+- **Bootstrap React**
+- **Material UI (MUI)**
+- **Axios** (للتعامل مع الـ API لاحقًا)
+- **React Router DOM**
+- **Git & GitHub Workflow**
 
-## React Compiler
+---
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## Git Workflow (Team Rules)
 
-Note: This will impact Vite dev & build performances.
+>  مهم جدًا الالتزام بالورك فلو دا علشان نضمن إن الـ main دايمًا مستقر.
 
-## Expanding the ESLint configuration
+### الفروع الأساسية
+- **`main`** → الفرع الرئيسي، ممنوع أي شغل مباشر عليه.
+- **`staging`** → الفرع التجميعي (نختبر عليه كل الفيتشرز قبل ما ندمج للـ main).
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### الخطوات الأساسية لكل عضو:
+1. تأكد إنك على آخر نسخة من المشروع:
+   ```bash
+   git checkout staging
+   git pull origin staging
+
+### أنشئ فرع جديد باسم الميزة اللي هتشتغل عليها
+
+git checkout -b feature/اسم-الميزة
+
+
+### اشتغل على الكود، وبعد الانتهاء 
+
+git add .
+git commit -m "Add: وصف التعديل"
+git push origin feature/اسم-الميزة
+
+
+### روح على GitHub → اعمل Pull Request (PR) من feature/... إلى staging.
+
+بعد المراجعة والموافقة، بنعمل Merge للـ staging.
+
+عند انتهاء المشروع بالكامل، نعمل Merge من staging إلى main.
+
+______________________________________________________________
+# Team Workflow Example
+مثال                    	الفرع  	 الاسم 	
+محمد	feature/navbar	             إنشاء Navbar بالـ MUI	
+ياسين	feature/login	             صفحة تسجيل الدخول	
+عمر	    feature/doctor-profile	     بروفايل الدكتور	
+
+______________________________________________________________
+# Project Setup
+
+1. Clone the repo
+git clone https://github.com/Mo7amedTa7a/Final-Project-DEPI.git
+
+2. Install dependencies
+npm install
+
+3. Run the project
+npm run dev
