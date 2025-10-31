@@ -35,9 +35,9 @@ git checkout -b feature/اسم-الميزة
 
 ### اشتغل على الكود، وبعد الانتهاء 
 
-git add .
-git commit -m "Add: وصف التعديل"
-git push origin feature/اسم-الميزة
+- git add .
+- git commit -m "Add: وصف التعديل"
+- git push origin feature/اسم-الميزة
 
 
 ### روح على GitHub → اعمل Pull Request (PR) من feature/... إلى staging.
@@ -46,14 +46,15 @@ git push origin feature/اسم-الميزة
 
 عند انتهاء المشروع بالكامل، نعمل Merge من staging إلى main.
 
-______________________________________________________________
-# Team Workflow Example
-مثال                    	الفرع  	 الاسم 	
-محمد	feature/navbar	             إنشاء Navbar بالـ MUI	
-ياسين	feature/login	             صفحة تسجيل الدخول	
-عمر	    feature/doctor-profile	     بروفايل الدكتور	
+## Team Workflow Example
 
-______________________________________________________________
+| الاسم        | الفرع                      | المهمة                          |
+|--------------|----------------------------|----------------------------------|
+| محمد         | `feature/navbar`           | إنشاء Navbar بالـ MUI            |
+| ياسين        | `feature/login`            | صفحة تسجيل الدخول                |
+| عمر          | `feature/doctor-profile`   | بروفايل الدكتور                  |
+
+
 # Project Setup
 
 1. Clone the repo
