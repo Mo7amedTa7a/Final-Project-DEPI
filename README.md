@@ -64,3 +64,20 @@ npm install
 
 3. Run the project
 npm run dev
+
+
+
+# لاحظ
+### كل واحد في الفريق يعمل  
+
+git clone https://github.com/your-username/your-repo-name.git
+
+
+### وبعدين لما يشتغلوا على برانش خاص بيهم
+
+git checkout -b feature/feature-name
+
+
+### وبعد ما يخلص 
+
+git push origin feature/feature-name
