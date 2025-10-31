@@ -70,7 +70,7 @@ npm run dev
 # لاحظ
 ### كل واحد في الفريق يعمل  
 
-git clone https://github.com/your-username/your-repo-name.git
+git clone https://github.com/Mo7amedTa7a/Final-Project-DEPI.git
 
 
 ### وبعدين لما يشتغلوا على برانش خاص بيهم
