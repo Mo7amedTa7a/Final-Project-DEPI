@@ -1,0 +1,286 @@
+/* src/DoctorProfile.css */
+:root {
+  --primary: #3182ed;
+  --card-bg: #ffffff;
+  --muted: #6b7280;
+  --soft: #f3f6f9;
+}
+
+body {
+  font-family: "Inter", system-ui, Arial, sans-serif;
+}
+
+/* Page / Header */
+.doctor-page {
+  background: var(--soft);
+  min-height: 100vh;
+  color: #111827;
+}
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid rgba(2, 6, 23, 0.06);
+  box-shadow: 0 1px 0 rgba(2, 6, 23, 0.03);
+}
+.brand-icon {
+  color: var(--primary);
+  font-size: 28px;
+}
+.brand-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin-left: 0.25rem;
+}
+.header-center {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+.header-center a {
+  text-decoration: none;
+  color: var(--muted);
+}
+.header-center .active-link {
+  color: var(--primary);
+  font-weight: 600;
+}
+.header-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* icon button */
+.icon-btn {
+  border-radius: 999px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Avatar */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #f8f4f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(2, 6, 23, 0.06);
+}
+
+/* Card styles */
+.card-smooth {
+  border-radius: 12px;
+  background: var(--card-bg);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.04);
+  border: none;
+}
+.left-card {
+  padding: 2rem 1.5rem;
+  text-align: center;
+}
+.profile-wrap {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+.profile-photo {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 6px solid #eef5ff;
+  display: block;
+  margin: 0 auto;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+.online-dot {
+  position: absolute;
+  right: -2px;
+  bottom: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 3px solid white;
+}
+.doctor-name {
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-weight: 700;
+}
+.doctor-role {
+  color: var(--primary);
+  margin-bottom: 0.35rem;
+}
+.muted {
+  color: var(--muted);
+}
+.rating-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+.star-icon {
+  color: #fbbf24;
+}
+
+/* favourite button */
+.fav-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(49, 130, 237, 0.12);
+  color: var(--primary);
+  background: #eef6ff;
+}
+
+/* Center card & calendar */
+.center-card .tab-header .nav-link.active {
+  color: var(--primary) !important;
+  font-weight: 600;
+  border-bottom: 3px solid var(--primary) !important;
+}
+.section-title {
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #0f172a;
+}
+
+/* calendar style */
+.calendar-card {
+  background: #f8fafc;
+  padding: 18px;
+  border-radius: 10px;
+}
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.cal-nav {
+  border: none;
+  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cal-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+.weekday-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+}
+.dates-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+.date-cell {
+  background: white;
+  padding: 10px;
+  text-align: center;
+  border-radius: 10px;
+  color: #111827;
+  font-weight: 500;
+}
+.date-muted {
+  color: #9ca3af;
+  background: transparent;
+}
+.date-active {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 6px 18px rgba(49, 130, 237, 0.18);
+}
+
+/* slots */
+.slots-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.slot-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(2, 6, 23, 0.08);
+  background: white;
+  cursor: pointer;
+}
+.slot-btn.active {
+  background: #eaf3ff;
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 6px 16px rgba(49, 130, 237, 0.08);
+}
+.slot-btn.disabled {
+  background: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* CTA */
+.primary-cta {
+  background: var(--primary);
+  border: none;
+  color: white;
+  border-radius: 10px;
+  font-weight: 700;
+  padding: 12px 18px;
+}
+
+/* right column */
+.location-card .card-body {
+  padding: 1rem;
+}
+.map-placeholder img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.queue-card .queue-number {
+  font-size: 2.25rem;
+  color: var(--primary);
+  font-weight: 800;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+/* responsive tweaks */
+@media (max-width: 991px) {
+  .header-center {
+    display: none;
+  }
+  .left-card {
+    text-align: center;
+    padding: 1.25rem;
+  }
+  .profile-photo {
+    width: 90px;
+    height: 90px;
+  }
+  .calendar-card {
+    padding: 14px;
+  }
+}
