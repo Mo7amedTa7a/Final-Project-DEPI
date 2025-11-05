@@ -1,9 +1,10 @@
+import { Typography } from "@mui/material";
 import "./App.css";
 
 function App () {
     return (
       <div>
-        <h1>Hello, World!</h1>
+        <Typography variant="h1" color="primary">Hello, World!</Typography>
       </div>
     )
 }
