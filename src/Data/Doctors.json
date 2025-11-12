@@ -1,0 +1,122 @@
+[
+  {
+    "id": "1",
+    "name": "Emily Carter",
+    "specialty": "Cardiologist",
+    "rating": 4.9,
+    "image": "https://i.pravatar.cc/150?img=47",
+    "experience": "15 years",
+    "education": "MD, Harvard Medical School",
+    "location": "Springfield, IL",
+    "bio": "Dr. Emily Carter is a board-certified cardiologist with over 15 years of experience in treating cardiovascular diseases.",
+    "isTop": true
+  },
+  {
+    "id": "2",
+    "name": "Ben Adams",
+    "specialty": "Dermatologist",
+    "rating": 4.8,
+    "image": "https://i.pravatar.cc/150?img=12",
+    "experience": "12 years",
+    "education": "MD, Johns Hopkins University",
+    "location": "Oak Brook, IL",
+    "bio": "Dr. Ben Adams specializes in dermatology and has extensive experience in treating various skin conditions.",
+    "isTop": true
+  },
+  {
+    "id": "3",
+    "name": "Chloe Davis",
+    "specialty": "Pediatrician",
+    "rating": 4.9,
+    "image": "https://i.pravatar.cc/150?img=45",
+    "experience": "10 years",
+    "education": "MD, Stanford University",
+    "location": "Lakeside, CA",
+    "bio": "Dr. Chloe Davis is a dedicated pediatrician committed to providing the best care for children.",
+    "isTop": true
+  },
+  {
+    "id": "4",
+    "name": "Marcus Chen",
+    "specialty": "Neurologist",
+    "rating": 4.7,
+    "image": "https://i.pravatar.cc/150?img=33",
+    "experience": "18 years",
+    "education": "MD, Mayo Clinic",
+    "location": "Springfield, IL",
+    "bio": "Dr. Marcus Chen is an experienced neurologist specializing in the diagnosis and treatment of neurological disorders.",
+    "isTop": true
+  },
+  {
+    "id": "5",
+    "name": "Sophia Martinez",
+    "specialty": "Orthopedic Surgeon",
+    "rating": 4.8,
+    "image": "https://i.pravatar.cc/150?img=22",
+    "experience": "14 years",
+    "education": "MD, University of California, San Francisco",
+    "location": "Oak Brook, IL",
+    "bio": "Dr. Sophia Martinez is a skilled orthopedic surgeon with a focus on sports injuries and joint replacement.",
+    "isTop": true
+  },
+  {
+    "id": "6",
+    "name": "Liam Johnson",
+    "specialty": "General Practitioner",
+    "rating": 4.6,
+    "image": "https://i.pravatar.cc/150?img=5",
+    "experience": "11 years",
+    "education": "MD, Columbia University",
+    "location": "Lakeside, CA",
+    "bio": "Dr. Liam Johnson is a compassionate psychiatrist dedicated to mental health and wellness.",
+    "isTop": true
+  },
+  {
+    "id": "7",
+    "name": "Olivia Brown",
+    "specialty": "Gynecologist",
+    "rating": 4.9,
+    "image": "https://i.pravatar.cc/150?img=28",
+    "experience": "13 years",
+    "education": "MD, University of Pennsylvania",
+    "location": "Springfield, IL",
+    "bio": "Dr. Olivia Brown is a trusted gynecologist providing comprehensive, personalized care.",
+    "isTop": true
+  },
+  {
+    "id": "8",
+    "name": "Ethan Wilson",
+    "specialty": "Psychiatrist",
+    "rating": 4.7,
+    "image": "https://i.pravatar.cc/150?img=18",
+    "experience": "16 years",
+    "education": "MD, University of Michigan",
+    "location": "Oak Brook, IL",
+    "bio": "Dr. Ethan Wilson is an experienced general surgeon specializing in minimally invasive procedures.",
+    "isTop": false
+  },
+  {
+    "id": "9",
+    "name": "Ava Thompson",
+    "specialty": "Endocrinologist",
+    "rating": 4.8,
+    "image": "https://i.pravatar.cc/150?img=9",
+    "experience": "9 years",
+    "education": "MD, University of Chicago",
+    "location": "Lakeside, CA",
+    "bio": "Dr. Ava Thompson is a dedicated endocrinologist focusing on diabetes and hormonal disorders.",
+    "isTop": true
+  },
+  {
+    "id": "10",
+    "name": "Noah Garcia",
+    "specialty": "Gastroenterologist",
+    "rating": 4.6,
+    "image": "https://i.pravatar.cc/150?img=3",
+    "experience": "14 years",
+    "education": "MD, New York University",
+    "location": "Springfield, IL",
+    "bio": "Dr. Noah Garcia is a skilled gastroenterologist specializing in digestive health and liver diseases.",
+    "isTop": true
+  }
+]
