@@ -18,13 +18,28 @@ export default function MainLayout() {
 
       <Box sx={{ display: "flex", flexGrow: 1 }}>
         <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
-        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Box 
+          component="main" 
+          sx={{ 
+            flexGrow: 1,
+            marginLeft: { 
+              xs: open ? "240px" : "64px",
+              sm: open ? "240px" : "64px",
+            },
+            marginTop: (theme) => `${theme.mixins.toolbar.minHeight}px`,
+            transition: "margin-left 0.3s ease",
+            width: { 
+              xs: `calc(100% - ${open ? "240px" : "64px"})`,
+              sm: `calc(100% - ${open ? "240px" : "64px"})`,
+            },
+          }}
+        >
           {/* المحتوى المتغير */}
           <Outlet />
         </Box>
       </Box>
 
-      <Footer />
+      <Footer open={open} />
     </Box>
   );
 }

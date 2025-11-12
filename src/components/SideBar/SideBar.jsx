@@ -64,14 +64,33 @@ const Drawer = styled(MuiDrawer, {
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",
-  position: "relative",
+  position: "fixed",
+  height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
+  top: theme.mixins.toolbar.minHeight,
+  bottom: 0,
+  left: 0,
+  zIndex: theme.zIndex.drawer,
   ...(open && {
     ...openedMixin(theme),
-    "& .MuiDrawer-paper": openedMixin(theme),
+    "& .MuiDrawer-paper": {
+      ...openedMixin(theme),
+      position: "fixed",
+      height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
+      top: theme.mixins.toolbar.minHeight,
+      bottom: 0,
+      left: 0,
+    },
   }),
   ...(!open && {
     ...closedMixin(theme),
-    "& .MuiDrawer-paper": closedMixin(theme),
+    "& .MuiDrawer-paper": {
+      ...closedMixin(theme),
+      position: "fixed",
+      height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
+      top: theme.mixins.toolbar.minHeight,
+      bottom: 0,
+      left: 0,
+    },
   }),
 }));
 
@@ -98,13 +117,6 @@ export default function Sidebar({ open, handleDrawerClose }) {
     <Drawer
       variant="permanent"
       open={open}
-      sx={{
-        height: "calc(100vh - 50px)",
-        "& .MuiDrawer-paper": {
-          height: "calc(100vh - 50px)",
-          position: "relative",
-        },
-      }}
     >
       <DrawerHeader>
         <IconButton onClick={handleDrawerClose}>
