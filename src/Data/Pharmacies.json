@@ -1,0 +1,317 @@
+[
+  {
+    "id": 1,
+    "name": "City Health Pharmacy",
+    "shortName": "CITY HEALTH",
+    "location": "Oak Brook, IL",
+    "address": "123 Wellness Ave, Meditown",
+    "phone": "(555) 123-4567",
+    "hours": "Mon-Fri 9:00 AM - 7:00 PM",
+    "email": "contact@cityhealthpharmacy.com",
+    "rating": 4.8,
+    "reviews": 98,
+    "isTopRated": true,
+    "products": [
+      {
+        "id": 1,
+        "name": "Paracetamol 500mg",
+        "price": 8.99,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 2,
+        "name": "Vitamin C Tablets",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 1,
+        "name": "Paracetamol 500mg",
+        "price": 8.99,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 2,
+        "name": "Vitamin C Tablets",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 1,
+        "name": "Paracetamol 500mg",
+        "price": 8.99,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 2,
+        "name": "Vitamin C Tablets",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 1,
+        "name": "Paracetamol 500mg",
+        "price": 8.99,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 2,
+        "name": "Vitamin C Tablets",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 1,
+        "name": "Paracetamol 500mg",
+        "price": 8.99,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 2,
+        "name": "Vitamin C Tablets",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Wellness Pharmacy",
+    "shortName": "WELLNESS",
+    "location": "Springfield, IL",
+    "address": "123 Main Street, Springfield, IL 62701",
+    "phone": "(217) 555-0123",
+    "hours": "Mon-Fri: 9:00 AM - 8:00 PM, Sat-Sun: 10:00 AM - 6:00 PM",
+    "email": "info@wellnesspharmacy.com",
+    "rating": 4.9,
+    "reviews": 124,
+    "isTopRated": true,
+    "products": [
+      {
+        "id": 2,
+        "name": "Vitamin C Tablets",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 3,
+        "name": "Cough Syrup",
+        "price": 15.25,
+        "stock": "Low Stock",
+        "stockColor": "warning",
+        "image": "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 4,
+        "name": "Antibiotic Ointment",
+        "price": 6.75,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1588776814546-3a3f2b5d6e8e?w=400&h=400&fit=crop"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "The Corner Drugstore",
+    "shortName": "CORNER",
+    "location": "Lakeside, CA",
+    "address": "789 Lake Road, Lakeside, CA 92040",
+    "phone": "(619) 555-0789",
+    "hours": "Mon-Sun: 8:00 AM - 10:00 PM",
+    "email": "contact@cornerdrugstore.com",
+    "rating": 4.7,
+    "reviews": 76,
+    "isTopRated": true,
+    "products": [
+      {
+        "id": 1,
+        "name": "Paracetamol 500mg",
+        "price": 8.99,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 3,
+        "name": "Cough Syrup",
+        "price": 15.25,
+        "stock": "Low Stock",
+        "stockColor": "warning",
+        "image": "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=400&h=400&fit=crop"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Healthy Living Pharmacy",
+    "shortName": "HEALTHY LIVING",
+    "location": "Maplewood, NJ",
+    "address": "456 Health St, Maplewood, NJ 07040",
+    "phone": "(973) 555-0456",
+    "hours": "Mon-Fri: 9:00 AM - 7:00 PM, Sat: 10:00 AM - 5:00 PM, Sun: Closed",
+    "email": "contact@cornerdrugstore.com",
+    "rating": 4.6,
+    "reviews": 54,
+    "isTopRated": true,
+    "products": [
+      {
+        "id": 1,
+        "name": "Paracetamol 500mg Tablets",
+        "price": 8.99,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 2,
+        "name": "Vitamin C 1000mg Capsules",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 3,
+        "name": "Cough Syrup - Honey Lemon Flavor",
+        "price": 15.25,
+        "stock": "Low Stock",
+        "stockColor": "warning",
+        "image": "https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 4,
+        "name": "Antibiotic Ointment",
+        "price": 6.75,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1588776814546-3a3f2b5d6e8e?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 5,
+        "name": "Allergy Relief Tablets",
+        "price": 14.0,
+        "stock": "Out of Stock",
+        "stockColor": "error",
+        "image": "https://images.unsplash.com/photo-1590080877777-1c4a1f3b8f4e?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 6,
+        "name": "Pain Relief Gel 100g",
+        "price": 9.8,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1600180758890-6b94519a8ba1?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 7,
+        "name": "Digital Thermometer",
+        "price": 19.99,
+        "stock": "Low Stock",
+        "stockColor": "warning",
+        "image": "https://images.unsplash.com/photo-1588776814312-8eaf9b4e7d3d?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 8,
+        "name": "Hand Sanitizer 250ml",
+        "price": 5.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1583947582886-b13a0b7c7a56?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 9,
+        "name": "Blood Pressure Monitor",
+        "price": 59.99,
+        "stock": "Low Stock",
+        "stockColor": "warning",
+        "image": "https://images.unsplash.com/photo-1617814074169-2a5db5c89c21?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 10,
+        "name": "Multivitamin Gummies",
+        "price": 11.25,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1582719478171-2b1d1a7f9b0d?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 11,
+        "name": "First Aid Kit",
+        "price": 24.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1588774068268-0efb8f49c3f6?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 12,
+        "name": "Eye Drops (Lubricant)",
+        "price": 7.99,
+        "stock": "Out of Stock",
+        "stockColor": "error",
+        "image": "https://images.unsplash.com/photo-1582562124811-16e0b1b6d11e?w=400&h=400&fit=crop"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "Neighborhood Pharmacy",
+    "shortName": "NEIGHBORHOOD",
+    "location": "Riverdale, NY",
+    "address": "321 Community Blvd, Riverdale, NY 10463",
+    "phone": "(718) 555-0321",
+    "hours": "Mon-Fri: 8:00 AM - 9:00 PM, Sat-Sun: 9:00 AM - 6:00 PM",
+    "email": "contact@cornerdrugstore.com",
+    "rating": 4.5,
+    "reviews": 67,
+    "isTopRated": true,
+    "products": [
+      {
+        "id": 2,
+        "name": "Vitamin C Tablets",
+        "price": 12.5,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1550572017-edd951b55104?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 5,
+        "name": "Allergy Relief Tablets",
+        "price": 14.0,
+        "stock": "Out of Stock",
+        "stockColor": "error",
+        "image": "https://images.unsplash.com/photo-1590080877777-1c4a1f3b8f4e?w=400&h=400&fit=crop"
+      },
+      {
+        "id": 4,
+        "name": "Antibiotic Ointment",
+        "price": 6.75,
+        "stock": "In Stock",
+        "stockColor": "success",
+        "image": "https://images.unsplash.com/photo-1588776814546-3a3f2b5d6e8e?w=400&h=400&fit=crop"
+      }
+    ]
+  }
+]

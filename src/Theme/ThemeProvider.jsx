@@ -40,7 +40,7 @@ const CurePanTheme = createTheme({
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
-      fontSize: "2rem",
+      fontSize: "3rem",
       fontWeight: 600,
       color: "#1E88E5",
     },

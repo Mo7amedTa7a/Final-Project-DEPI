@@ -1,17 +1,6 @@
-import { Typography } from "@mui/material";
-import Signup from "./Signup/SignUp";
-import {ThemeProvider} from "@mui/material/styles";
-import Theme from './Signup/Theme';
-import "./App.css";
+import { RouterProvider } from "react-router";
+import { Routes } from "./router/Routes";
 
-function App () {
-    return (
-      <div>
-        <ThemeProvider theme={Theme}>
-        <Signup/>
-        </ThemeProvider>
-      </div>
-    )
+export default function App() {
+  return <RouterProvider router={Routes} />;
 }
-
-export default App;
