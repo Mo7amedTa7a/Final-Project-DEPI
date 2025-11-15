@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import doctorsData from "../../Data/Doctors.json";
-import { Box, Typography, Grid, TextField, InputAdornment, useTheme } from "@mui/material";
+import { Box, Typography, TextField, InputAdornment, useTheme } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router";
 import LoaderInPage from "../../components/Loader/LoaderInPage"; // استيراد الـ Loader

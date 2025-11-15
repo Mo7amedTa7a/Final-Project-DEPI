@@ -1,7 +1,8 @@
 // Data
 import Data from "/src/Data/Doctors.json";
 // MUI Components
-import { Box, Typography, Grid, Card, CardContent, Avatar, Rating, useTheme } from "@mui/material";
+import Grid from '@mui/material/Grid';
+import { Box, Typography, Card, CardContent, Avatar, Rating, useTheme } from "@mui/material";
 import { useNavigate } from "react-router";
 
 const DoctorsSection = () => {
@@ -42,7 +43,7 @@ const DoctorsSection = () => {
 
         <Grid container spacing={3} justifyContent="center">
           {doctors.map((doctor) => (
-            <Grid item xs={12} sm={6} md={3} key={doctor.id}>
+            <Grid size={{ xs: 12, sm: 6 ,md:3}} key={doctor.id}>
               <Card
                 sx={{
                   borderRadius: "16px",

@@ -2,12 +2,12 @@ import React, { useState } from "react";
 import {
   Box,
   Button,
-  Grid,
   Card,
   Container,
   useTheme,
   Typography,
 } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import { useParams, useNavigate } from "react-router-dom";
 import PharmacyHeader from "./PharmacyHeader";
 import ContactInfo from "./ContactInfo";

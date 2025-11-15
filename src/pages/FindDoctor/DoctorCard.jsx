@@ -6,9 +6,8 @@ import {
   Typography,
   Rating,
   Box,
-  Grid,
 } from "@mui/material";
-
+import Grid from '@mui/material/Grid';
 const DoctorCard = ({ doctor, onClick }) => {
   return (
     

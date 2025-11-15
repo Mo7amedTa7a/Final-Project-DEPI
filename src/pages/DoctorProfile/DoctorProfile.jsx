@@ -2,6 +2,7 @@
 import Data from "/src/Data/Doctors.json";
 
 // MUI Components
+import Grid from '@mui/material/Grid';
 import { useParams, useNavigate } from "react-router";
 import {
   Box,
@@ -11,7 +12,6 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
   useTheme,
   Container,
 } from "@mui/material";
