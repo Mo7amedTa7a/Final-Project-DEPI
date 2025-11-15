@@ -2,6 +2,7 @@
 import Data from "/src/Data/Doctors.json";
 
 // MUI Components
+import Grid from '@mui/material/Grid';
 import { useParams, useNavigate } from "react-router";
 import {
   Box,
@@ -11,7 +12,6 @@ import {
   Button,
   Card,
   CardContent,
-  Grid,
   useTheme,
   Container,
 } from "@mui/material";
@@ -26,7 +26,16 @@ const DoctorProfile = () => {
   const doctors = Data;
 
   // Find the doctor by ID
-  const doctor = doctors.find((doc) => doc.id === Number(id)) || doctors[0];
+  const doctor = doctors.find((doc) => doc.id === id);
+  if (!doctor) {
+  return (
+    <Box sx={{ textAlign: "center", mt: 10 }}>
+      <Typography variant="h5" color="error">
+        Doctor not found
+      </Typography>
+    </Box>
+  );
+}
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -46,7 +55,7 @@ const DoctorProfile = () => {
         }}
       >
         <Grid container spacing={4}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <Box
               sx={{
                 display: "flex",
@@ -83,7 +92,7 @@ const DoctorProfile = () => {
             </Box>
           </Grid>
 
-          <Grid item xs={12} md={8}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <CardContent>
               <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
                 About
@@ -93,7 +102,7 @@ const DoctorProfile = () => {
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography
                     variant="subtitle2"
                     sx={{ color: theme.palette.text.secondary, mb: 0.5 }}
@@ -104,7 +113,7 @@ const DoctorProfile = () => {
                     {doctor.experience}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography
                     variant="subtitle2"
                     sx={{ color: theme.palette.text.secondary, mb: 0.5 }}
@@ -115,7 +124,7 @@ const DoctorProfile = () => {
                     {doctor.education}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography
                     variant="subtitle2"
                     sx={{ color: theme.palette.text.secondary, mb: 0.5 }}

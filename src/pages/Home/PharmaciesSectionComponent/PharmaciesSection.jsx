@@ -3,13 +3,12 @@ import Data from "../../../Data/Pharmacies.json";
 import {
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
   Rating,
-  Button,
   useTheme,
 } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
 import { useNavigate } from "react-router";
 

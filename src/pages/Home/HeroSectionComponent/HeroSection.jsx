@@ -1,7 +1,8 @@
 // Bootstrap Components
 import { Carousel } from "react-bootstrap";
 // MUI Components
-import { TextField, Button, Grid, useTheme } from "@mui/material";
+import { TextField, Button, useTheme } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import SearchIcon from "@mui/icons-material/Search";
 
 const HeroSection = () => {
@@ -94,7 +95,7 @@ const HeroSection = () => {
                   flexDirection: { xs: "column", md: "row" },
                 }}
               >
-                <Grid item xs={12} md={8} sx={{ flex: 1, minWidth: 0 }}>
+                <Grid size={{ xs: 12, md: 8 }} sx={{ flex: 1, minWidth: 0 }}>
                   <TextField
                     fullWidth
                     variant="outlined"
@@ -103,7 +104,7 @@ const HeroSection = () => {
                   />
                 </Grid>
 
-                <Grid item xs={12} md={4} sx={{ flexShrink: 0 }}>
+                <Grid size={{ xs: 12, md: 4 }}  sx={{ flexShrink: 0 }}>
                   <Button
                     variant="contained"
                     color="error"
