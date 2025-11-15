@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box,Grid, Typography,TextField,Button,ToggleButton,ToggleButtonGroup,Paper,Alert} from "@mui/material";
-import { Padding, Person } from "@mui/icons-material";
+import { Person } from "@mui/icons-material";
 import VaccinesRoundedIcon from '@mui/icons-material/VaccinesRounded';
 import HealingRoundedIcon from '@mui/icons-material/HealingRounded';
 import SpaIcon from '@mui/icons-material/Spa';
@@ -19,12 +19,15 @@ export default function Signup() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (error) setError("");
   };
 
   const handleRoleChange = (event, newRole) => {
     if (newRole !== null) {
       setFormData((prev) => ({ ...prev, role: newRole }));
+      if (error) setError("");
     }
+
   };
 
   const handleSubmit = (e) => {
@@ -35,17 +38,25 @@ export default function Signup() {
     if (!formData.name || !formData.email || !formData.password || !formData.role ) {
       setError("Please fill in all fields");
       setResponseMessage("");
-      return;
+      return
     }
 
+    localStorage.setItem("UserData",JSON.stringify({
+      name:formData.name,
+      email:formData.email,
+      password:formData.password,
+      role:formData.role
+    }))
     setResponseMessage("Account created successfully!");
     setError("");
   };
 
   return (
-    <Grid container sx={{ minHeight: "100vh"}}>
+    <Grid container sx={{ minHeight: "100vh"}} >
+
       {/* Left side */}
-      <Grid item xs={12} md={6} sx={{ backgroundColor: "#E8F0FE", display: "flex",
+      <Grid item size={{ mobile: 12, tablet: 5, laptop: 6 }} 
+      sx={{ backgroundColor: "#E8F0FE", display: "flex",
       flexDirection: "column", justifyContent: "center",
         alignItems: "center", textAlign: "center", p: "70px",
         }}
@@ -63,6 +74,7 @@ export default function Signup() {
 
       {/* Right side */}
       <Grid item p="30px" component={Paper} elevation={3} square
+      size={{ mobile: 12, tablet:7, laptop: 6 }} 
         sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center"}} >
           
         <Box>
@@ -91,6 +103,7 @@ export default function Signup() {
 
             <ToggleButtonGroup
               color="primary"
+              exclusive
               value={formData.role}
               onChange={handleRoleChange}
               fullWidth
@@ -108,16 +121,13 @@ export default function Signup() {
               <ToggleButton value="Pharmacy" sx = {{display:"flex" ,flexDirection :"column" }}>
                 <VaccinesRoundedIcon  sx={{ m: 1 , color:"skyblue"}} /> Pharmacy
               </ToggleButton>
-
             </ToggleButtonGroup>
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              size="large"
-              sx={{ mt: 1, borderRadius: 2, mb:2 }}
-            >
+              sx={{ mt: 1, borderRadius: 2, mb:2 }}>
               Create Account
             </Button>
           </form>
@@ -141,4 +151,6 @@ export default function Signup() {
       </Grid>
     </Grid>
   );
-}
+}   
+
+
