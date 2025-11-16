@@ -1,20 +1,24 @@
 import React, { useState } from "react";
-import { Box, CssBaseline } from "@mui/material";
+import { Box, CssBaseline, useMediaQuery, useTheme } from "@mui/material";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import { Outlet } from "react-router"; // في حال استخدمت React Router
 import Sidebar from "../SideBar/SideBar";
 
-export default function MainLayout() {
-  const [open, setOpen] = useState(false);
+const drawerWidth = 240;
 
-  const handleDrawerOpen = () => setOpen(true);
+export default function MainLayout() {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
+  const [open, setOpen] = useState(false); // يبدأ مغلق افتراضياً
+
+  const handleDrawerToggle = () => setOpen(!open);
   const handleDrawerClose = () => setOpen(false);
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", flexDirection: "column" }}>
       <CssBaseline />
-      <Header open={open} handleDrawerOpen={handleDrawerOpen} />
+      <Header open={open} handleDrawerToggle={handleDrawerToggle} />
 
       <Box sx={{ display: "flex", flexGrow: 1 }}>
         <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
@@ -22,16 +26,13 @@ export default function MainLayout() {
           component="main" 
           sx={{ 
             flexGrow: 1,
-            marginLeft: { 
-              xs: open ? "240px" : "64px",
-              sm: open ? "240px" : "64px",
-            },
             marginTop: (theme) => `${theme.mixins.toolbar.minHeight}px`,
-            transition: "margin-left 0.3s ease",
-            width: { 
-              xs: `calc(100% - ${open ? "240px" : "64px"})`,
-              sm: `calc(100% - ${open ? "240px" : "64px"})`,
-            },
+            marginLeft: 0,
+            width: "100%",
+            transition: theme.transitions.create(["margin", "width"], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.leavingScreen,
+            }),
           }}
         >
           {/* المحتوى المتغير */}

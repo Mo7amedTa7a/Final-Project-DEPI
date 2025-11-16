@@ -11,12 +11,68 @@ import {
 import Grid from '@mui/material/Grid';
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
 import { useNavigate } from "react-router";
+import { useMemo, useEffect } from "react";
 
-const PharmaciesSection = () => {
+const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const pharmacies = Data.filter((pharmacy) => pharmacy.isTopRated);
+  // Extract governorate from location
+  const getGovernorate = (location) => {
+    if (!location) return null;
+    const parts = location.split(",").map((p) => p.trim());
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  };
+
+  // Load registered pharmacies
+  useEffect(() => {
+    // This will be handled by the parent component if needed
+  }, []);
+
+  // Filter pharmacies
+  const filteredPharmacies = useMemo(() => {
+    // Load registered pharmacies from localStorage
+    const users = JSON.parse(localStorage.getItem("Users") || "[]");
+    const registeredPharmacies = users
+      .filter((user) => user.role === "Pharmacy" && user.pharmacyProfile)
+      .map((user) => ({
+        id: user.email,
+        name: user.pharmacyProfile.pharmacyName,
+        location: user.pharmacyProfile.location,
+        rating: 4.5,
+        reviews: 0,
+        isTopRated: true,
+        isRegistered: true,
+      }));
+
+    let pharmacies = [...registeredPharmacies, ...Data].filter((pharmacy) => pharmacy.isTopRated);
+
+    // Filter by search type
+    if (searchType === "Doctor") {
+      return [];
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      pharmacies = pharmacies.filter(
+        (pharmacy) =>
+          pharmacy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (pharmacy.location && pharmacy.location.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Filter by governorate
+    if (governorateFilter !== "All") {
+      pharmacies = pharmacies.filter((pharmacy) => {
+        const pharmacyGov = getGovernorate(pharmacy.location);
+        return pharmacyGov && pharmacyGov.toLowerCase() === governorateFilter.toLowerCase();
+      });
+    }
+
+    return pharmacies;
+  }, [searchTerm, searchType, governorateFilter]);
+
+  const pharmacies = filteredPharmacies;
 
   const handlePharmacyClick = (pharmacyId) => {
     navigate(`/pharmacy/${pharmacyId}`);
@@ -45,12 +101,15 @@ const PharmaciesSection = () => {
             textAlign: "center",
           }}
         >
-          Trusted Pharmacies in Your Area
+          {searchTerm || governorateFilter !== "All" || searchType !== "All"
+            ? "Search Results - Pharmacies"
+            : "Trusted Pharmacies in Your Area"}
         </Typography>
 
         <Grid container spacing={3} justifyContent="center">
-          {pharmacies.map((pharmacy) => (
-            <Grid item xs={12} sm={6} md={4} key={pharmacy.id}>
+          {pharmacies.length > 0 ? (
+            pharmacies.map((pharmacy) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={pharmacy.id}>
               <Card
                 sx={{
                   borderRadius: "16px",
@@ -168,8 +227,20 @@ const PharmaciesSection = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
-          ))}
+              </Grid>
+            ))
+          ) : (
+            <Typography
+              variant="body1"
+              sx={{
+                color: theme.palette.text.secondary,
+                textAlign: "center",
+                py: 4,
+              }}
+            >
+              No pharmacies found matching your search criteria.
+            </Typography>
+          )}
         </Grid>
       </Box>
     </Box>

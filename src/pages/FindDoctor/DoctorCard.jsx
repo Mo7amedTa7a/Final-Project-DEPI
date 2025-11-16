@@ -8,6 +8,8 @@ import {
   Box,
 } from "@mui/material";
 import Grid from '@mui/material/Grid';
+import doctorImage from "../../assets/doctor.svg";
+
 const DoctorCard = ({ doctor, onClick }) => {
   return (
     
@@ -36,7 +38,7 @@ const DoctorCard = ({ doctor, onClick }) => {
         }}
       >
         <Avatar
-          src={doctor.image}
+          src={doctorImage}
           alt={doctor.name}
           sx={{ width: 100, height: 100, mb: 1, border: `3px solid` }}
         />

@@ -1,18 +1,88 @@
 // Bootstrap Components
 import { Carousel } from "react-bootstrap";
 // MUI Components
-import { TextField, Button, useTheme } from "@mui/material";
+import { 
+  TextField, 
+  Button, 
+  useTheme, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem,
+  InputAdornment,
+  Box,
+} from "@mui/material";
 import Grid from '@mui/material/Grid';
 import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import { heroImages } from "../../../Data/HeroSectionData";
+import doctorsData from "../../../Data/Doctors.json";
+import pharmaciesData from "../../../Data/Pharmacies.json";
+import { useMemo } from "react";
+import { useNavigate } from "react-router";
 
-const HeroSection = () => {
+const HeroSection = ({
+  searchTerm,
+  setSearchTerm,
+  searchType,
+  setSearchType,
+  specialtyFilter,
+  setSpecialtyFilter,
+  governorateFilter,
+  setGovernorateFilter,
+}) => {
   const theme = useTheme();
-  const images = [
-    "/src/assets/4.jpg",
-    "/src/assets/3.jpg",
-    "/src/assets/2.jpg",
-    "/src/assets/1.jpg",
-  ];
+  const navigate = useNavigate();
+  const images = heroImages;
+
+  // Extract governorate from location
+  const getGovernorate = (location) => {
+    if (!location) return null;
+    const parts = location.split(",").map((p) => p.trim());
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  };
+
+  // Get unique specialties
+  const uniqueSpecialties = useMemo(() => {
+    return Array.from(new Set(doctorsData.map((d) => d.specialty).filter((s) => s))).sort();
+  }, []);
+
+  // Get unique governorates from both doctors and pharmacies
+  const uniqueGovernorates = useMemo(() => {
+    const doctorGovs = doctorsData.map((d) => getGovernorate(d.location)).filter((g) => g);
+    const pharmacyGovs = pharmaciesData.map((p) => getGovernorate(p.location)).filter((g) => g);
+    return Array.from(new Set([...doctorGovs, ...pharmacyGovs])).sort();
+  }, []);
+
+  const handleSearch = () => {
+    // Build query parameters
+    const params = new URLSearchParams();
+    
+    if (searchTerm) {
+      params.set('search', searchTerm);
+    }
+    if (governorateFilter !== "All") {
+      params.set('governorate', governorateFilter);
+    }
+    
+    // Navigate based on search type
+    if (searchType === "Doctor" || (searchType === "All" && specialtyFilter !== "All")) {
+      // Navigate to FindDoctor page
+      if (specialtyFilter !== "All") {
+        params.set('specialty', specialtyFilter);
+      }
+      navigate(`/finddoctor?${params.toString()}`);
+    } else if (searchType === "Pharmacy") {
+      // Navigate to Pharmacies page
+      navigate(`/pharmacies?${params.toString()}`);
+    } else {
+      // If All and no specialty filter, show both sections on home
+      const resultsSection = document.getElementById('search-results');
+      if (resultsSection) {
+        resultsSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
 
   return (
     <Carousel fade controls={false} indicators={false} interval={3000}>
@@ -83,45 +153,116 @@ const HeroSection = () => {
                 </p>
               </div>
               {/*End The text above the search box  */}
-              <Grid
-                container
-                spacing={2}
-                alignItems="center"
+              <Box
                 sx={{
                   bgcolor: "rgba(255, 255, 255, 0.95)",
                   p: 3,
                   borderRadius: "25px",
                   boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-                  flexDirection: { xs: "column", md: "row" },
                 }}
               >
-                <Grid size={{ xs: 12, md: 8 }} sx={{ flex: 1, minWidth: 0 }}>
-                  <TextField
-                    fullWidth
-                    variant="outlined"
-                    placeholder="Doctor or pharmacy name"
-                    size="medium"
-                  />
+                {/* Search Type and Search Term */}
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Search Type</InputLabel>
+                      <Select
+                        value={searchType}
+                        label="Search Type"
+                        onChange={(e) => setSearchType(e.target.value)}
+                        startAdornment={
+                          <InputAdornment position="start" sx={{ ml: 1 }}>
+                            <FilterListIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                          </InputAdornment>
+                        }
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="All">All</MenuItem>
+                        <MenuItem value="Doctor">Doctors</MenuItem>
+                        <MenuItem value="Pharmacy">Pharmacies</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 8 }}>
+                    <TextField
+                      fullWidth
+                      variant="outlined"
+                      placeholder="Search by name..."
+                      size="small"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <SearchIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{ borderRadius: 2 }}
+                    />
+                  </Grid>
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 4 }}  sx={{ flexShrink: 0 }}>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="large"
-                    startIcon={<SearchIcon />}
-                    fullWidth
-                    sx={{
-                      fontWeight: "bold",
-                      borderRadius: "15px",
-                      py: 1.5,
-                      fontSize: "1rem",
-                    }}
-                  >
-                    Search
-                  </Button>
+                {/* Filters */}
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  {searchType === "All" || searchType === "Doctor" ? (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Specialty</InputLabel>
+                        <Select
+                          value={specialtyFilter}
+                          label="Specialty"
+                          onChange={(e) => setSpecialtyFilter(e.target.value)}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          <MenuItem value="All">All Specialties</MenuItem>
+                          {uniqueSpecialties.map((specialty) => (
+                            <MenuItem key={specialty} value={specialty}>
+                              {specialty}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  ) : null}
+                  <Grid size={{ xs: 12, sm: searchType === "Pharmacy" ? 12 : 6 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Governorate</InputLabel>
+                      <Select
+                        value={governorateFilter}
+                        label="Governorate"
+                        onChange={(e) => setGovernorateFilter(e.target.value)}
+                        sx={{ borderRadius: 2 }}
+                      >
+                        <MenuItem value="All">All Governorates</MenuItem>
+                        {uniqueGovernorates.map((governorate) => (
+                          <MenuItem key={governorate} value={governorate}>
+                            {governorate}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
                 </Grid>
-              </Grid>
+
+                {/* Search Button */}
+                <Button
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  startIcon={<SearchIcon />}
+                  fullWidth
+                  onClick={handleSearch}
+                  sx={{
+                    fontWeight: "bold",
+                    borderRadius: "15px",
+                    py: 1.5,
+                    fontSize: "1rem",
+                  }}
+                >
+                  Search
+                </Button>
+              </Box>
             </div>
           </div>
         </Carousel.Item>

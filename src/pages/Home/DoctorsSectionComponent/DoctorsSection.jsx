@@ -4,12 +4,57 @@ import Data from "/src/Data/Doctors.json";
 import Grid from '@mui/material/Grid';
 import { Box, Typography, Card, CardContent, Avatar, Rating, useTheme } from "@mui/material";
 import { useNavigate } from "react-router";
+import doctorImage from "../../../assets/doctor.svg";
+import { useMemo } from "react";
 
-const DoctorsSection = () => {
+const DoctorsSection = ({ searchTerm, searchType, specialtyFilter, governorateFilter }) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  const doctors = Data.filter(doctor => doctor.isTop);
+  // Extract governorate from location
+  const getGovernorate = (location) => {
+    if (!location) return null;
+    const parts = location.split(",").map((p) => p.trim());
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  };
+
+  // Filter doctors
+  const filteredDoctors = useMemo(() => {
+    let doctors = Data.filter(doctor => doctor.isTop);
+
+    // Filter by search type
+    if (searchType === "Pharmacy") {
+      return [];
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      doctors = doctors.filter(
+        (doctor) =>
+          doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by specialty
+    if (specialtyFilter !== "All") {
+      doctors = doctors.filter(
+        (doctor) => doctor.specialty && doctor.specialty.toLowerCase() === specialtyFilter.toLowerCase()
+      );
+    }
+
+    // Filter by governorate
+    if (governorateFilter !== "All") {
+      doctors = doctors.filter((doctor) => {
+        const doctorGov = getGovernorate(doctor.location);
+        return doctorGov && doctorGov.toLowerCase() === governorateFilter.toLowerCase();
+      });
+    }
+
+    return doctors;
+  }, [searchTerm, searchType, specialtyFilter, governorateFilter]);
+
+  const doctors = filteredDoctors;
 
   const handleDoctorClick = (doctorId) => {
     navigate(`/doctor/${doctorId}`);
@@ -38,11 +83,14 @@ const DoctorsSection = () => {
             textAlign: "center",
           }}
         >
-          Find Top-Rated Doctors Near You
+          {searchTerm || specialtyFilter !== "All" || governorateFilter !== "All" || searchType !== "All"
+            ? "Search Results - Doctors"
+            : "Find Top-Rated Doctors Near You"}
         </Typography>
 
         <Grid container spacing={3} justifyContent="center">
-          {doctors.map((doctor) => (
+          {doctors.length > 0 ? (
+            doctors.map((doctor) => (
             <Grid size={{ xs: 12, sm: 6 ,md:3}} key={doctor.id}>
               <Card
                 sx={{
@@ -68,7 +116,7 @@ const DoctorsSection = () => {
                   }}
                 >
                   <Avatar
-                    src={doctor.image}
+                    src={doctorImage}
                     alt={doctor.name}
                     sx={{
                       width: 100,
@@ -129,7 +177,19 @@ const DoctorsSection = () => {
                 </CardContent>
               </Card>
             </Grid>
-          ))}
+            ))
+          ) : (
+            <Typography
+              variant="body1"
+              sx={{
+                color: theme.palette.text.secondary,
+                textAlign: "center",
+                py: 4,
+              }}
+            >
+              No doctors found matching your search criteria.
+            </Typography>
+          )}
         </Grid>
       </Box>
     </Box>

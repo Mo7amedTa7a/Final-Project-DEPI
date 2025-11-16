@@ -8,43 +8,137 @@ import {
   CardContent,
   Rating,
   useTheme,
-  TextField, // استبدال input بـ TextField
-  InputAdornment, // لإضافة أيقونة البحث
-  CircularProgress, // استخدام CircularProgress لعرض Loader
+  TextField,
+  InputAdornment,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
-import SearchIcon from "@mui/icons-material/Search"; // استيراد أيقونة البحث
-import { useNavigate } from "react-router";
+import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import { useNavigate, useSearchParams } from "react-router";
 
 const Pharmacies = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [pharmacies, setPharmacies] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
+  const [locationFilter, setLocationFilter] = useState("All");
+  const [governorateFilter, setGovernorateFilter] = useState(searchParams.get('governorate') || "All");
   const [filteredPharmacies, setFilteredPharmacies] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); // حالة تحميل البيانات
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // محاكاة عملية تحميل البيانات
+    // تحميل البيانات من localStorage و JSON
     const loadData = () => {
-      setTimeout(() => {
+      try {
+        // تحميل الصيدليات المسجلة من localStorage
+        const users = JSON.parse(localStorage.getItem("Users") || "[]");
+        const registeredPharmacies = users
+          .filter((user) => user.role === "Pharmacy" && user.pharmacyProfile)
+          .map((user) => ({
+            id: user.email, // استخدام email كـ id
+            name: user.pharmacyProfile.pharmacyName,
+            shortName: user.pharmacyProfile.shortName,
+            location: user.pharmacyProfile.location,
+            address: user.pharmacyProfile.address,
+            phone: user.pharmacyProfile.phoneNumber,
+            email: user.pharmacyProfile.email,
+            hours: user.pharmacyProfile.hours,
+            rating: 4.5, // Default rating
+            reviews: 0, // Default reviews
+            image: user.pharmacyProfile.profilePicture || null,
+            isRegistered: true, // علامة للصيدليات المسجلة
+          }));
+
+        // دمج الصيدليات المسجلة مع الصيدليات من JSON
+        const allPharmacies = [...registeredPharmacies, ...pharmaciesData];
+        
+        setPharmacies(allPharmacies);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error loading pharmacies:", error);
+        // Fallback to JSON data only
         setPharmacies(pharmaciesData);
-        setIsLoading(false); // تغيير حالة التحميل بعد انتهاء البيانات
-      }, 1000); // محاكاة تأخير 1 ثانية
+        setIsLoading(false);
+      }
     };
 
     loadData();
   }, []);
 
+  // Extract governorate from location (assuming format like "City, Governorate" or just "Governorate")
+  const getGovernorate = (location) => {
+    if (!location) return null;
+    // If location contains comma, take the part after comma, otherwise take the whole location
+    const parts = location.split(",").map((p) => p.trim());
+    return parts.length > 1 ? parts[parts.length - 1] : parts[0];
+  };
+
   useEffect(() => {
-    const results = pharmacies.filter((pharmacy) =>
-      pharmacy.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const results = pharmacies.filter((pharmacy) => {
+      // Filter by search term (name or location)
+      const matchesSearch =
+        searchTerm === "" ||
+        pharmacy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (pharmacy.location && pharmacy.location.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      // Filter by location (city)
+      const matchesLocation =
+        locationFilter === "All" ||
+        (pharmacy.location && pharmacy.location.toLowerCase().includes(locationFilter.toLowerCase()));
+
+      // Filter by governorate
+      const pharmacyGovernorate = getGovernorate(pharmacy.location);
+      const matchesGovernorate =
+        governorateFilter === "All" ||
+        (pharmacyGovernorate && pharmacyGovernorate.toLowerCase() === governorateFilter.toLowerCase());
+
+      return matchesSearch && matchesLocation && matchesGovernorate;
+    });
     setFilteredPharmacies(results);
-  }, [searchTerm, pharmacies]);
+  }, [searchTerm, locationFilter, governorateFilter, pharmacies]);
+
+  // Get unique locations for filter
+  const uniqueLocations = Array.from(
+    new Set(pharmacies.map((p) => p.location).filter((loc) => loc))
+  ).sort();
+
+  // Get unique governorates for filter
+  const uniqueGovernorates = Array.from(
+    new Set(
+      pharmacies
+        .map((p) => getGovernorate(p.location))
+        .filter((gov) => gov)
+    )
+  ).sort();
 
   const handleChange = (event) => {
-    setSearchTerm(event.target.value);
+    const value = event.target.value;
+    setSearchTerm(value);
+    // Update URL params
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set('search', value);
+    } else {
+      params.delete('search');
+    }
+    setSearchParams(params);
+  };
+
+  const handleGovernorateChange = (value) => {
+    setGovernorateFilter(value);
+    const params = new URLSearchParams(searchParams);
+    if (value !== "All") {
+      params.set('governorate', value);
+    } else {
+      params.delete('governorate');
+    }
+    setSearchParams(params);
   };
 
   const handlePharmacyClick = (pharmacyId) => {
@@ -74,37 +168,99 @@ const Pharmacies = () => {
           All Pharmacies
         </Typography>
 
-        {/* استبدال input بـ TextField مع الأنماط */}
-        <TextField
-          fullWidth
-          placeholder="Search by name"
-          value={searchTerm}
-          onChange={handleChange}
-          variant="outlined"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon color="action" />
-              </InputAdornment>
-            ),
-          }}
+        {/* Search and Filters Section */}
+        <Box
           sx={{
-            marginBottom: "20px",
-            mx: "auto", // توسيط الشريط
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "8px",
-              "& fieldset": {
-                borderColor: theme.palette.divider,
-              },
-              "&:hover fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.palette.primary.main,
-              },
-            },
+            display: "flex",
+            gap: 2,
+            mb: 3,
+            flexDirection: { xs: "column", sm: "row" },
+            alignItems: { xs: "stretch", sm: "center" },
           }}
-        />
+        >
+          <TextField
+            fullWidth
+            placeholder="Search by name or location"
+            value={searchTerm}
+            onChange={handleChange}
+            variant="outlined"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              flex: { xs: 1, sm: 2 },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                "& fieldset": {
+                  borderColor: theme.palette.divider,
+                },
+                "&:hover fieldset": {
+                  borderColor: theme.palette.primary.main,
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+            }}
+          />
+          <FormControl
+            size="small"
+            sx={{
+              minWidth: { xs: "100%", sm: 180 },
+              flex: { xs: 1, sm: 0 },
+            }}
+          >
+            <InputLabel>Location</InputLabel>
+            <Select
+              value={locationFilter}
+              label="Location"
+              onChange={(e) => setLocationFilter(e.target.value)}
+              startAdornment={
+                <InputAdornment position="start" sx={{ ml: 1 }}>
+                  <FilterListIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                </InputAdornment>
+              }
+              sx={{
+                borderRadius: 2,
+              }}
+            >
+              <MenuItem value="All">All Locations</MenuItem>
+              {uniqueLocations.map((location) => (
+                <MenuItem key={location} value={location}>
+                  {location}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl
+            size="small"
+            sx={{
+              minWidth: { xs: "100%", sm: 180 },
+              flex: { xs: 1, sm: 0 },
+            }}
+          >
+            <InputLabel>Governorate</InputLabel>
+            <Select
+              value={governorateFilter}
+              label="Governorate"
+              onChange={(e) => handleGovernorateChange(e.target.value)}
+              sx={{
+                borderRadius: 2,
+              }}
+            >
+              <MenuItem value="All">All Governorates</MenuItem>
+              {uniqueGovernorates.map((governorate) => (
+                <MenuItem key={governorate} value={governorate}>
+                  {governorate}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
 
         {/* عرض Loader أثناء تحميل البيانات */}
         {isLoading ? (
@@ -115,7 +271,7 @@ const Pharmacies = () => {
           <Grid container spacing={3} justifyContent="center">
             {filteredPharmacies.length > 0 ? (
               filteredPharmacies.map((pharmacy) => (
-                <Grid item xs={12} sm={6} md={4} key={pharmacy.id}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={pharmacy.id}>
                   <Card
                     sx={{
                       borderRadius: "16px",
@@ -137,7 +293,7 @@ const Pharmacies = () => {
                         gap: 2,
                       }}
                     >
-                      {/* Pharmacy Icon */}
+                      {/* Pharmacy Icon/Image */}
                       <Box
                         sx={{
                           width: 60,
@@ -149,14 +305,28 @@ const Pharmacies = () => {
                           alignItems: "center",
                           justifyContent: "center",
                           flexShrink: 0,
+                          overflow: "hidden",
                         }}
                       >
-                        <LocalPharmacyIcon
-                          sx={{
-                            color: theme.palette.primary.contrastText,
-                            fontSize: 32,
-                          }}
-                        />
+                        {pharmacy.image ? (
+                          <Box
+                            component="img"
+                            src={pharmacy.image}
+                            alt={pharmacy.name}
+                            sx={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                            }}
+                          />
+                        ) : (
+                          <LocalPharmacyIcon
+                            sx={{
+                              color: theme.palette.primary.contrastText,
+                              fontSize: 32,
+                            }}
+                          />
+                        )}
                       </Box>
 
                       {/* Pharmacy Info */}

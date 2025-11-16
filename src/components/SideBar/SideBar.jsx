@@ -11,6 +11,9 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  Snackbar,
+  Alert,
+  useMediaQuery,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -22,9 +25,10 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import MessageIcon from "@mui/icons-material/Message";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import GroupIcon from "@mui/icons-material/Group";
-import SettingsIcon from "@mui/icons-material/Settings";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { menuItemsConfig, bottomMenuConfig } from "../../Data/SidebarData";
 
 const drawerWidth = 240;
 
@@ -64,108 +68,131 @@ const Drawer = styled(MuiDrawer, {
   flexShrink: 0,
   whiteSpace: "nowrap",
   boxSizing: "border-box",
-  position: "fixed",
-  height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
-  top: theme.mixins.toolbar.minHeight,
-  bottom: 0,
-  left: 0,
-  zIndex: theme.zIndex.drawer,
   ...(open && {
     ...openedMixin(theme),
-    "& .MuiDrawer-paper": {
-      ...openedMixin(theme),
-      position: "fixed",
-      height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
-      top: theme.mixins.toolbar.minHeight,
-      bottom: 0,
-      left: 0,
-    },
+    "& .MuiDrawer-paper": openedMixin(theme),
   }),
   ...(!open && {
     ...closedMixin(theme),
-    "& .MuiDrawer-paper": {
-      ...closedMixin(theme),
-      position: "fixed",
-      height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
-      top: theme.mixins.toolbar.minHeight,
-      bottom: 0,
-      left: 0,
-    },
+    "& .MuiDrawer-paper": closedMixin(theme),
   }),
 }));
 
+
 export default function Sidebar({ open, handleDrawerClose }) {
   const theme = useTheme();
+  const navigate = useNavigate();
+  const [logoutToast, setLogoutToast] = React.useState(false);
+  const [userRole, setUserRole] = React.useState(null);
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
 
-    //قوائم التنقل
-  const mainMenu = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Home", icon: <HomeIcon />, path: "/" },
-    { text: "Find Doctor", icon: <PersonSearchIcon />, path: "/finddoctor" },
-    { text: "Pharmacies", icon: <LocalPharmacyIcon />, path: "/pharmacies" },
-    { text: "Messages", icon: <MessageIcon />, path: "/messages" },
-    { text: "Orders", icon: <ShoppingBagIcon />, path: "/orders" },
-    { text: "Patients", icon: <GroupIcon />, path: "/patients" },
-  ];
+  React.useEffect(() => {
+    // الحصول على role المستخدم من localStorage
+    const currentUser = localStorage.getItem("CurrentUser");
+    if (currentUser) {
+      try {
+        const userData = JSON.parse(currentUser);
+        setUserRole(userData.role);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+      }
+    }
 
-  const bottomMenu = [
-    { text: "Settings", icon: <SettingsIcon /> },
-    { text: "Logout", icon: <LogoutIcon />, color: "error.main" },
-  ];
+    // الاستماع لتغييرات localStorage
+    const handleStorageChange = () => {
+      const updatedUser = localStorage.getItem("CurrentUser");
+      if (updatedUser) {
+        try {
+          const userData = JSON.parse(updatedUser);
+          setUserRole(userData.role);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+        }
+      } else {
+        setUserRole(null);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const handleLogout = () => {
+    // حذف المستخدم الحالي فقط وليس كل البيانات
+    localStorage.removeItem("CurrentUser");
+    setLogoutToast(true);
+    setTimeout(() => {
+      navigate("/");
+      window.location.reload();
+    }, 1500);
+  };
+
+  const handleCloseToast = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setLogoutToast(false);
+  };
+
+  // Icon mapping
+  const iconMap = {
+    Dashboard: DashboardIcon,
+    Home: HomeIcon,
+    PersonSearch: PersonSearchIcon,
+    LocalPharmacy: LocalPharmacyIcon,
+    Message: MessageIcon,
+    ShoppingBag: ShoppingBagIcon,
+    Group: GroupIcon,
+    AccountCircle: AccountCircleIcon,
+    Logout: LogoutIcon,
+  };
+
+  // Convert config to menu items with icons
+  const allMenuItems = menuItemsConfig.map((item) => ({
+    ...item,
+    icon: React.createElement(iconMap[item.iconName]),
+  }));
+
+  // تصفية القائمة بناءً على role المستخدم
+  const mainMenu = allMenuItems.filter((item) => {
+    // إذا لم يكن للعنصر خاصية roles، يظهر للجميع
+    if (!item.roles) return true;
+    // إذا كان للعنصر خاصية roles، يظهر فقط للـ roles المحددة
+    return item.roles.includes(userRole);
+  });
+
+  const bottomMenu = bottomMenuConfig.map((item) => ({
+    ...item,
+    icon: React.createElement(iconMap[item.iconName]),
+    action: item.text === "Logout" ? handleLogout : undefined,
+  }));
 
   return (
-    <Drawer
-      variant="permanent"
-      open={open}
-    >
-      <DrawerHeader>
-        <IconButton onClick={handleDrawerClose}>
-          {theme.direction === "rtl" ? (
-            <ChevronRightIcon />
-          ) : (
-            <ChevronLeftIcon />
-          )}
-        </IconButton>
-      </DrawerHeader>
-
-      <Divider />
-      <List>
-        {mainMenu.map(({ text, icon, path }) => (
-          <ListItem key={text} disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              component={Link}
-              to={path}
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-                "&:hover": {
-                  backgroundColor: "rgba(25, 118, 210, 0.1)",
-                },
-              }}
-            >
-              <ListItemIcon
-                sx={{
-                  minWidth: 0,
-                  mr: open ? 3 : "auto",
-                  justifyContent: "center",
-                  color: "#1976d2",
-                }}
-              >
-                {icon}
-              </ListItemIcon>
-              <ListItemText primary={text} sx={{ opacity: open ? 1 : 0 }} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-
-      <Box sx={{ position: "absolute", bottom: 0, width: "100%" }}>
+    <>
+      {/* Permanent drawer للشاشات الكبيرة */}
+      <Drawer
+        variant="permanent"
+        open={open}
+        sx={{
+          display: { xs: "none", md: "block" },
+        }}
+      >
+        <DrawerHeader>
+          <IconButton onClick={handleDrawerClose}>
+            {theme.direction === "rtl" ? (
+              <ChevronRightIcon />
+            ) : (
+              <ChevronLeftIcon />
+            )}
+          </IconButton>
+        </DrawerHeader>
         <Divider />
         <List>
-          {bottomMenu.map(({ text, icon, color }) => (
+          {mainMenu.map(({ text, icon, path }) => (
             <ListItem key={text} disablePadding sx={{ display: "block" }}>
               <ListItemButton
+                component={Link}
+                to={path}
                 sx={{
                   minHeight: 48,
                   justifyContent: open ? "initial" : "center",
@@ -180,20 +207,160 @@ export default function Sidebar({ open, handleDrawerClose }) {
                     minWidth: 0,
                     mr: open ? 3 : "auto",
                     justifyContent: "center",
-                    color: color || "#1976d2",
+                    color: "#1976d2",
                   }}
                 >
                   {icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={text}
-                  sx={{ opacity: open ? 1 : 0 }}
-                />
+                <ListItemText primary={text} sx={{ opacity: open ? 1 : 0 }} />
               </ListItemButton>
             </ListItem>
           ))}
         </List>
-      </Box>
-    </Drawer>
+
+        <Box sx={{ position: "absolute", bottom: 0, width: "100%" }}>
+          <Divider />
+          <List>
+            {bottomMenu.map(({ text, icon, color, action, path }) => (
+              <ListItem key={text} disablePadding sx={{ display: "block" }}>
+                <ListItemButton
+                  onClick={action || undefined}
+                  component={path ? Link : action ? "button" : "div"}
+                  to={path || undefined}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: open ? "initial" : "center",
+                    px: 2.5,
+                    "&:hover": {
+                      backgroundColor: "rgba(25, 118, 210, 0.1)",
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: open ? 3 : "auto",
+                      justifyContent: "center",
+                      color: color || "#1976d2",
+                    }}
+                  >
+                    {icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={text}
+                    sx={{ opacity: open ? 1 : 0 }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+
+      {/* Temporary drawer للشاشات الصغيرة */}
+      <MuiDrawer
+        variant="temporary"
+        open={open}
+        onClose={handleDrawerClose}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+            width: { xs: "100%", sm: "50%" },
+          },
+        }}
+      >
+        <DrawerHeader>
+          <IconButton onClick={handleDrawerClose}>
+            {theme.direction === "rtl" ? (
+              <ChevronRightIcon />
+            ) : (
+              <ChevronLeftIcon />
+            )}
+          </IconButton>
+        </DrawerHeader>
+
+        <Divider />
+        <List>
+          {mainMenu.map(({ text, icon, path }) => (
+            <ListItem key={text} disablePadding sx={{ display: "block" }}>
+              <ListItemButton
+                component={Link}
+                to={path}
+                sx={{
+                  minHeight: 48,
+                  justifyContent: "initial",
+                  px: 2.5,
+                  "&:hover": {
+                    backgroundColor: "rgba(25, 118, 210, 0.1)",
+                  },
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: 3,
+                    justifyContent: "center",
+                    color: "#1976d2",
+                  }}
+                >
+                  {icon}
+                </ListItemIcon>
+                <ListItemText primary={text} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+
+        <Box sx={{ position: "absolute", bottom: 0, width: "100%" }}>
+          <Divider />
+          <List>
+            {bottomMenu.map(({ text, icon, color, action, path }) => (
+              <ListItem key={text} disablePadding sx={{ display: "block" }}>
+                <ListItemButton
+                  onClick={action || undefined}
+                  component={path ? Link : action ? "button" : "div"}
+                  to={path || undefined}
+                  sx={{
+                    minHeight: 48,
+                    justifyContent: "initial",
+                    px: 2.5,
+                    "&:hover": {
+                      backgroundColor: "rgba(25, 118, 210, 0.1)",
+                    },
+                  }}
+                >
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      mr: 3,
+                      justifyContent: "center",
+                      color: color || "#1976d2",
+                    }}
+                  >
+                    {icon}
+                  </ListItemIcon>
+                  <ListItemText primary={text} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </MuiDrawer>
+
+      <Snackbar
+        open={logoutToast}
+        autoHideDuration={2000}
+        onClose={handleCloseToast}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert onClose={handleCloseToast} severity="success" sx={{ width: "100%" }}>
+          تم تسجيل الخروج بنجاح!
+        </Alert>
+      </Snackbar>
+    </>
   );
 }

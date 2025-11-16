@@ -1,7 +1,10 @@
 import React from "react";
-import { Box, Typography, Link } from "@mui/material";
+import { Box, Typography, Link, useMediaQuery, useTheme } from "@mui/material";
 
 export default function Footer({ open }) {
+  const theme = useTheme();
+  const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
+
   return (
     <Box
       sx={{
@@ -9,30 +12,50 @@ export default function Footer({ open }) {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        px: 4,
-        py: 1.5,
+        px: { xs: 2, sm: 3, md: 4 },
+        py: { xs: 1, sm: 1.25, md: 1.5 },
         borderTopLeftRadius: "8px",
         borderTopRightRadius: "8px",
         boxShadow: "0 -2px 6px rgba(0,0,0,0.1)",
         mt: "auto",
+        flexDirection: { xs: "column", sm: "row" },
+        gap: { xs: 1, sm: 2 },
         marginLeft: {
-          xs: open ? "240px" : "64px",
-          sm: open ? "240px" : "64px",
+          xs: 0,
+          md: isLargeScreen && open ? "240px" : isLargeScreen ? `calc(${theme.spacing(7)} + 1px)` : 0,
         },
         width: {
-          xs: `calc(100% - ${open ? "240px" : "64px"})`,
-          sm: `calc(100% - ${open ? "240px" : "64px"})`,
+          xs: "100%",
+          md: isLargeScreen && open 
+            ? `calc(100% - 240px)` 
+            : isLargeScreen 
+            ? `calc(100% - calc(${theme.spacing(7)} + 1px))` 
+            : "100%",
         },
-        transition: "margin-left 0.3s ease, width 0.3s ease",
+        transition: theme.transitions.create(["margin-left", "width"], {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
       }}
     >
       {/* الروابط اليسار */}
-      <Box sx={{ display: "flex", gap: 3 }}>
+      <Box 
+        sx={{ 
+          display: "flex", 
+          gap: { xs: 2, sm: 3 },
+          flexDirection: { xs: "column", sm: "row" },
+          alignItems: { xs: "center", sm: "flex-start" },
+          textAlign: { xs: "center", sm: "left" },
+        }}
+      >
         <Link
           href="#"
           underline="none"
           color="inherit"
-          sx={{ fontSize: "0.9rem", "&:hover": { textDecoration: "underline" } }}
+          sx={{ 
+            fontSize: { xs: "0.8rem", sm: "0.9rem" }, 
+            "&:hover": { textDecoration: "underline" } 
+          }}
         >
           About Us
         </Link>
@@ -40,7 +63,10 @@ export default function Footer({ open }) {
           href="#"
           underline="none"
           color="inherit"
-          sx={{ fontSize: "0.9rem", "&:hover": { textDecoration: "underline" } }}
+          sx={{ 
+            fontSize: { xs: "0.8rem", sm: "0.9rem" }, 
+            "&:hover": { textDecoration: "underline" } 
+          }}
         >
           Contact Us
         </Link>
@@ -49,7 +75,11 @@ export default function Footer({ open }) {
       {/* حقوق النشر */}
       <Typography
         variant="body2"
-        sx={{ color: "text.secondary", fontSize: "0.8rem" }}
+        sx={{ 
+          color: "text.secondary", 
+          fontSize: { xs: "0.75rem", sm: "0.8rem" },
+          textAlign: { xs: "center", sm: "right" },
+        }}
       >
         © {new Date().getFullYear()} CureTap
       </Typography>
