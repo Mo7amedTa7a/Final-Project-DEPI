@@ -71,7 +71,7 @@ export default function Login() {
     <Grid container sx={{ minHeight: "100vh" }}>
       {/* Left side */}
       <Grid
-        size={{ mobile: 12, tablet: 6, laptop: 6 }}
+        size={{ xs: 12, md: 6 }}
         sx={{
           backgroundColor: "#E8F0FE",
           display: "flex",
@@ -79,46 +79,76 @@ export default function Login() {
           justifyContent: "center",
           alignItems: "center",
           textAlign: "center",
-          p: "70px",
+          p: { xs: 3, sm: 4, md: 5, lg: 7 },
+          order: { xs: 2, md: 1 }
         }}
       >
-        <Typography fontSize="28px" fontWeight="600" color="primary" gutterBottom sx={{ mb: 3 }}>
+        <Typography 
+          fontSize={{ xs: "24px", sm: "26px", md: "28px" }} 
+          fontWeight="600" 
+          color="primary" 
+          gutterBottom 
+          sx={{ mb: { xs: 2, md: 3 } }}
+        >
           CureTap
         </Typography>
 
-        <Typography fontSize="30px" fontWeight="bold" gutterBottom>
+        <Typography 
+          fontSize={{ xs: "22px", sm: "26px", md: "30px" }} 
+          fontWeight="bold" 
+          gutterBottom
+          sx={{ mb: { xs: 1, md: 2 } }}
+        >
           Welcome Back!
         </Typography>
 
-        <Typography maxWidth="400px">
+        <Typography 
+          maxWidth={{ xs: "100%", sm: "400px" }}
+          fontSize={{ xs: "14px", sm: "16px" }}
+          sx={{ px: { xs: 2, sm: 0 } }}
+        >
           Sign in to access your health records, connect with doctors, and manage your pharmacy orders.
         </Typography>
       </Grid>
 
       {/* Right side */}
       <Grid
-        p="30px"
+        size={{ xs: 12, md: 6 }}
         component={Paper}
         elevation={3}
         square
-        size={{ mobile: 12, tablet: 6, laptop: 6 }}
         sx={{
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
+          p: { xs: 3, sm: 4, md: 5 },
+          order: { xs: 1, md: 2 }
         }}
       >
-        <Box>
-          <Typography fontWeight="bold" fontSize="30px">
+        <Box sx={{ width: "100%", maxWidth: { xs: "100%", sm: "500px" } }}>
+          <Typography 
+            fontWeight="bold" 
+            fontSize={{ xs: "22px", sm: "26px", md: "30px" }}
+            textAlign={{ xs: "center", sm: "left" }}
+            sx={{ mb: 1 }}
+          >
             Sign In to CureTap
           </Typography>
 
-          <Typography fontSize="18px" gutterBottom p={"10px"}>
+          <Typography 
+            fontSize={{ xs: "14px", sm: "16px", md: "18px" }} 
+            gutterBottom 
+            sx={{ 
+              p: { xs: "5px", sm: "10px" },
+              textAlign: { xs: "center", sm: "left" },
+              mb: 2
+            }}
+          >
             Enter your credentials to access your account.
           </Typography>
 
-          <form onSubmit={handleSubmit} padding="70px">
+          <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
               label="Email"
@@ -128,6 +158,7 @@ export default function Login() {
               onChange={handleChange}
               margin="normal"
               required
+              size="medium"
             />
 
             <TextField
@@ -139,13 +170,20 @@ export default function Login() {
               onChange={handleChange}
               margin="normal"
               required
+              size="medium"
             />
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 2, borderRadius: 2, mb: 2 }}
+              size="large"
+              sx={{ 
+                mt: { xs: 2, sm: 2 }, 
+                borderRadius: 2, 
+                mb: 2,
+                py: { xs: 1.5, sm: 1.25 }
+              }}
             >
               Sign In
             </Button>
@@ -168,7 +206,14 @@ export default function Login() {
             </Alert>
           </Snackbar>
 
-          <Typography textAlign="center" mt="3px" fontSize="20px">
+          <Typography 
+            textAlign="center" 
+            sx={{ 
+              mt: "3px", 
+              fontSize: { xs: "16px", sm: "18px", md: "20px" },
+              px: { xs: 1, sm: 0 }
+            }}
+          >
             Don't have an account?{" "}
             <Link to="/signup" style={{ color: "inherit", textDecoration: "underline" }}>
               Sign up

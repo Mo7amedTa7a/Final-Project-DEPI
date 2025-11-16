@@ -86,50 +86,128 @@ export default function Signup() {
     <Grid container sx={{ minHeight: "100vh"}} >
 
       {/* Left side */}
-      <Grid size={{ mobile: 12, tablet: 6, laptop: 6 }} 
-      sx={{ backgroundColor: "#E8F0FE", display: "flex",
-      flexDirection: "column", justifyContent: "center",
-        alignItems: "center", textAlign: "center", p: "70px",
-        }}
+      <Grid size={{ xs: 12, md: 6 }} 
+      sx={{ 
+        backgroundColor: "#E8F0FE", 
+        display: "flex",
+        flexDirection: "column", 
+        justifyContent: "center",
+        alignItems: "center", 
+        textAlign: "center", 
+        p: { xs: 3, sm: 4, md: 5, lg: 7 },
+        order: { xs: 2, md: 1 }
+      }}
       >
-        <Typography fontSize="28px" fontWeight="600" color="primary" gutterBottom sx={{ mb: 3 }}>
+        <Typography 
+          fontSize={{ xs: "24px", sm: "26px", md: "28px" }} 
+          fontWeight="600" 
+          color="primary" 
+          gutterBottom 
+          sx={{ mb: { xs: 2, md: 3 } }}
+        >
           CureTap
         </Typography>
 
-        <Typography fontSize="30px" fontWeight="bold" gutterBottom>
-          Welcome to the Future of Healthcare </Typography>
+        <Typography 
+          fontSize={{ xs: "22px", sm: "26px", md: "30px" }} 
+          fontWeight="bold" 
+          gutterBottom
+          sx={{ mb: { xs: 1, md: 2 } }}
+        >
+          Welcome to the Future of Healthcare 
+        </Typography>
 
-        <Typography maxWidth="400px" >
+        <Typography 
+          maxWidth={{ xs: "100%", sm: "400px" }}
+          fontSize={{ xs: "14px", sm: "16px" }}
+          sx={{ px: { xs: 2, sm: 0 } }}
+        >
           Your seamless connection to doctors, pharmacies, and your health
-          records, all in one place. </Typography>
+          records, all in one place. 
+        </Typography>
       </Grid>
 
       {/* Right side */}
-      <Grid p="30px" component={Paper} elevation={3} square
-      size={{ mobile: 12, tablet: 6, laptop: 6 }} 
-        sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center"}} >
+      <Grid 
+        size={{ xs: 12, md: 6 }} 
+        component={Paper} 
+        elevation={3} 
+        square
+        sx={{ 
+          display: "flex", 
+          flexDirection: "column", 
+          justifyContent: "center", 
+          alignItems: "center",
+          p: { xs: 3, sm: 4, md: 5 },
+          order: { xs: 1, md: 2 }
+        }}
+      >
           
-        <Box>
-          <Typography fontWeight="bold" fontSize="30px" >
+        <Box sx={{ width: "100%", maxWidth: { xs: "100%", sm: "500px" } }}>
+          <Typography 
+            fontWeight="bold" 
+            fontSize={{ xs: "22px", sm: "26px", md: "30px" }}
+            textAlign={{ xs: "center", sm: "left" }}
+            sx={{ mb: 1 }}
+          >
             Create Your CureTap Account
           </Typography>
 
-          <Typography fontSize="18x" gutterBottom p={"10px"}>
+          <Typography 
+            fontSize={{ xs: "14px", sm: "16px", md: "18px" }} 
+            gutterBottom 
+            sx={{ 
+              p: { xs: "5px", sm: "10px" },
+              textAlign: { xs: "center", sm: "left" },
+              mb: 2
+            }}
+          >
             Connecting patients,doctors,and pharmacies seamlessly.
           </Typography>
 
-          <form onSubmit={handleSubmit} padding="70px">
-            <TextField fullWidth label="Full name" name="name" value={formData.name}
-              onChange={handleChange} margin="normal" required />
+          <form onSubmit={handleSubmit}>
+            <TextField 
+              fullWidth 
+              label="Full name" 
+              name="name" 
+              value={formData.name}
+              onChange={handleChange} 
+              margin="normal" 
+              required
+              size="medium"
+            />
 
-            <TextField fullWidth label="Email" name="email" type="email" value={formData.email}
-              onChange={handleChange} margin="normal" required />
+            <TextField 
+              fullWidth 
+              label="Email" 
+              name="email" 
+              type="email" 
+              value={formData.email}
+              onChange={handleChange} 
+              margin="normal" 
+              required
+              size="medium"
+            />
 
             <TextField
-            fullWidth label="Password" name="password" type="password" value={formData.password}
-              onChange={handleChange} margin="normal" required />
+              fullWidth 
+              label="Password" 
+              name="password" 
+              type="password" 
+              value={formData.password}
+              onChange={handleChange} 
+              margin="normal" 
+              required
+              size="medium"
+            />
 
-            <Typography fontWeight="700" m={2}>
+            <Typography 
+              fontWeight="700" 
+              sx={{ 
+                m: { xs: 1.5, sm: 2 },
+                fontSize: { xs: "14px", sm: "16px" }
+              }}
+            >
               Choose your role:
             </Typography>
 
@@ -139,19 +217,54 @@ export default function Signup() {
               value={formData.role}
               onChange={handleRoleChange}
               fullWidth
-              sx={{ mb: 1 }}
+              orientation="horizontal"
+              sx={{ 
+                mb: 1,
+                flexDirection: { xs: "column", sm: "row" },
+                "& .MuiToggleButton-root": {
+                  flex: { xs: "1 1 100%", sm: "1 1 auto" },
+                  minWidth: { xs: "100%", sm: "auto" },
+                  mb: { xs: 1, sm: 0 }
+                }
+              }}
             >
-              <ToggleButton value="Patient" sx = {{display:"flex" ,flexDirection :"column" }}>
-                <Person color="primary" sx={{ m: 1}} />
-                Patient
+              <ToggleButton 
+                value="Patient" 
+                sx={{
+                  display: "flex", 
+                  flexDirection: { xs: "row", sm: "column" },
+                  gap: { xs: 1, sm: 0 },
+                  py: { xs: 1.5, sm: 2 }
+                }}
+              >
+                <Person color="primary" sx={{ m: { xs: 0, sm: 1 }}} />
+                <span>Patient</span>
               </ToggleButton>
 
-              <ToggleButton value="Doctor" sx = {{display:"flex" ,flexDirection :"column" }}>
-                <HealingRoundedIcon  sx={{ m: 1 ,color:"green" }} /> Doctor
+              <ToggleButton 
+                value="Doctor" 
+                sx={{
+                  display: "flex", 
+                  flexDirection: { xs: "row", sm: "column" },
+                  gap: { xs: 1, sm: 0 },
+                  py: { xs: 1.5, sm: 2 }
+                }}
+              >
+                <HealingRoundedIcon sx={{ m: { xs: 0, sm: 1 }, color: "green" }} /> 
+                <span>Doctor</span>
               </ToggleButton>
 
-              <ToggleButton value="Pharmacy" sx = {{display:"flex" ,flexDirection :"column" }}>
-                <VaccinesRoundedIcon  sx={{ m: 1 , color:"skyblue"}} /> Pharmacy
+              <ToggleButton 
+                value="Pharmacy" 
+                sx={{
+                  display: "flex", 
+                  flexDirection: { xs: "row", sm: "column" },
+                  gap: { xs: 1, sm: 0 },
+                  py: { xs: 1.5, sm: 2 }
+                }}
+              >
+                <VaccinesRoundedIcon sx={{ m: { xs: 0, sm: 1 }, color: "skyblue" }} /> 
+                <span>Pharmacy</span>
               </ToggleButton>
             </ToggleButtonGroup>
 
@@ -159,7 +272,14 @@ export default function Signup() {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 1, borderRadius: 2, mb:2 }}>
+              size="large"
+              sx={{ 
+                mt: { xs: 2, sm: 1 }, 
+                borderRadius: 2, 
+                mb: 2,
+                py: { xs: 1.5, sm: 1.25 }
+              }}
+            >
               Create Account
             </Button>
           </form>
@@ -181,7 +301,14 @@ export default function Signup() {
             </Alert>
           </Snackbar>
 
-          <Typography textAlign="center" mt="3px" fontSize="20px">
+          <Typography 
+            textAlign="center" 
+            sx={{ 
+              mt: "3px", 
+              fontSize: { xs: "16px", sm: "18px", md: "20px" },
+              px: { xs: 1, sm: 0 }
+            }}
+          >
             Already have an account?{" "}
             <Link to="/login" style={{ color: "inherit", textDecoration: "underline" }}>
               Log in
