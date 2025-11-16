@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import Logo from '../../assets/logo.png'; // استبدل هذا بمسار الشعار الفعلي
+import Logo from '../../assets/Logo.png';
 import { useTheme } from '@mui/material/styles';
 
 const Loader = () => {
