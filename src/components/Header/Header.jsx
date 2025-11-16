@@ -18,6 +18,7 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { Link } from "react-router";
 import userImage from "../../assets/user.svg";
+import logoImage from "../../assets/Logo_2.png";
 
 const drawerWidth = 240;
 
@@ -154,7 +155,7 @@ const Header = ({ open, handleDrawerToggle }) => {
             <MenuIcon />
           </IconButton>
           <img
-            src="/src/assets/Logo_2.png"
+            src={logoImage}
             alt="Logo"
             style={{ width: "6rem" }}
           />
