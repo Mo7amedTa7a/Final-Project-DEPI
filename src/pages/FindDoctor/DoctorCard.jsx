@@ -13,7 +13,7 @@ import doctorImage from "../../assets/doctor.svg";
 const DoctorCard = ({ doctor, onClick }) => {
   return (
     
-  <Grid  size={{ xs:12 ,sm:6, md:3 }}  key={doctor.id}>
+  <Grid  size={{ xs:12 ,sm:6, md:3 }}>
     <Card
       sx={{
         borderRadius: "16px",
@@ -38,7 +38,7 @@ const DoctorCard = ({ doctor, onClick }) => {
         }}
       >
         <Avatar
-          src={doctorImage}
+          src={doctor.image || doctorImage}
           alt={doctor.name}
           sx={{ width: 100, height: 100, mb: 1, border: `3px solid` }}
         />

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
-import Data from "/src/Data/Doctors.json";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
+import { useDoctors, useAppointments } from "../../hooks/useData";
+import FirestoreService from "../../services/FirestoreService";
 import {
   availableSlots,
   mockClinics,
@@ -35,6 +36,9 @@ import {
   Snackbar,
   useTheme,
   useMediaQuery,
+  Radio,
+  RadioGroup,
+  FormControlLabel,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
@@ -43,6 +47,8 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import ImageIcon from "@mui/icons-material/Image";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 
 const DoctorProfile = () => {
   const { id } = useParams();
@@ -62,10 +68,180 @@ const DoctorProfile = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState("");
   const [successToast, setSuccessToast] = useState(false);
+  const [appointmentType, setAppointmentType] = useState("video"); // "video" or "onsite"
+  const [doctorProfile, setDoctorProfile] = useState(null);
+  const [doctor, setDoctor] = useState(null);
+  // Mock data for reviews - must be before any conditional returns
+  const [reviews, setReviews] = useState(initialReviews);
 
-  const doctors = Data;
-  const doctor = doctors.find((doc) => doc.id === id);
+  // Use dynamic data hook
+  const { doctors, getDoctorById } = useDoctors();
+  
+  // Get doctor's email for appointment filtering
+  const doctorEmail = useMemo(() => {
+    return doctorProfile?.email || doctor?.email || id;
+  }, [doctorProfile, doctor, id]);
+  
+  // Get existing appointments for this doctor to check for booked slots
+  const appointmentFilters = useMemo(() => {
+    if (!doctorEmail) return {};
+    return {
+      doctorId: doctorEmail,
+      status: "confirmed",
+    };
+  }, [doctorEmail]);
+  
+  const { appointments: existingAppointments } = useAppointments(appointmentFilters);
+  
+  // Get booked time slots for selected date
+  const bookedSlots = useMemo(() => {
+    if (!selectedDate || !existingAppointments || existingAppointments.length === 0) {
+      return [];
+    }
+    
+    return existingAppointments
+      .filter(apt => {
+        const aptDate = apt.date;
+        if (!aptDate) return false;
+        
+        // Handle different date formats
+        if (typeof aptDate === 'string') {
+          const dateOnly = aptDate.split('T')[0].split(' ')[0];
+          return dateOnly === selectedDate;
+        }
+        
+        if (aptDate instanceof Date) {
+          return aptDate.toISOString().split("T")[0] === selectedDate;
+        }
+        
+        return String(aptDate) === selectedDate;
+      })
+      .filter(apt => {
+        // Exclude cancelled or completed appointments
+        return apt.status !== "cancelled" && apt.queueStatus !== "completed";
+      })
+      .map(apt => apt.time)
+      .filter(Boolean); // Remove empty values
+  }, [selectedDate, existingAppointments]);
 
+  // Load doctor data
+  useEffect(() => {
+    const loadDoctorData = async () => {
+      const foundDoctor = await getDoctorById(id);
+      if (foundDoctor) {
+        setDoctor(foundDoctor);
+        
+        // Create doctorProfile from foundDoctor data
+        // Ensure all fields have proper values (no undefined)
+        const profile = {
+          fullName: foundDoctor.name || "",
+          specialty: foundDoctor.specialty || "",
+          bio: foundDoctor.bio || "",
+          address: foundDoctor.location || foundDoctor.address || "",
+          profilePicture: foundDoctor.image || doctorImage,
+          videoCallPrice: foundDoctor.videoCallPrice || "",
+          onsitePrice: foundDoctor.onsitePrice || "",
+          consultationFee: foundDoctor.consultationFee || "",
+          phoneNumber: foundDoctor.phoneNumber || "",
+          email: foundDoctor.email || "",
+          education: foundDoctor.education || "",
+          clinicImages: foundDoctor.clinicImages || [],
+          clinics: foundDoctor.clinics || [],
+        };
+        setDoctorProfile(profile);
+      }
+    };
+    
+    loadDoctorData();
+  }, [id, doctors, getDoctorById]);
+
+  // Available clinics - use doctorProfile clinics if available, otherwise use mockClinics
+  // Main clinic (from address) should always appear first
+  const clinics = React.useMemo(() => {
+    const mainClinic = doctorProfile && doctorProfile.address ? {
+      id: "main-clinic",
+      name: "Main Clinic",
+      address: doctorProfile.address,
+      consultationFee: doctorProfile.onsitePrice || doctorProfile.consultationFee || 150,
+      queueData: {
+        nowServing: 0,
+        estimatedWait: 0,
+        lastUpdated: new Date().toLocaleTimeString(),
+      },
+      isMain: true,
+    } : null;
+
+    // Check if doctorProfile exists and has clinics array with data
+    if (doctorProfile && Array.isArray(doctorProfile.clinics) && doctorProfile.clinics.length > 0) {
+      // Convert doctorProfile clinics to the format expected by the UI
+      const convertedClinics = doctorProfile.clinics.map((clinic, index) => ({
+        id: clinic.id || index + 1,
+        name: clinic.name || `Clinic ${index + 1}`,
+        address: clinic.address || "Address not specified",
+        consultationFee: clinic.consultationFee || doctorProfile.consultationFee || doctorProfile.onsitePrice || 150,
+        // Add default queueData if not present
+        queueData: clinic.queueData || {
+          nowServing: 0,
+          estimatedWait: 0,
+          lastUpdated: new Date().toLocaleTimeString(),
+        },
+        images: clinic.images || [],
+        isMain: false,
+      }));
+      
+      // Always put main clinic first, then additional clinics
+      if (mainClinic) {
+        return [mainClinic, ...convertedClinics];
+      }
+      
+      return convertedClinics;
+    }
+    
+    // If doctorProfile exists but no clinics, return main clinic only
+    if (mainClinic) {
+      return [mainClinic];
+    }
+    
+    return mockClinics;
+  }, [doctorProfile]);
+
+  // Reset selectedClinic when clinics change
+  React.useEffect(() => {
+    if (clinics.length > 0) {
+      // Check if current selectedClinic exists in clinics
+      const clinicExists = clinics.some((c) => c.id.toString() === selectedClinic);
+      if (!selectedClinic || !clinicExists) {
+        // Always set to first clinic if no selection or selection doesn't exist
+        const firstClinicId = clinics[0].id.toString();
+        setSelectedClinic(firstClinicId);
+      }
+    }
+  }, [clinics]); // Only depend on clinics
+
+  const currentClinic = clinics.find((c) => c.id.toString() === selectedClinic) || clinics[0];
+
+  // Get images for the currently selected clinic
+  const currentClinicImages = React.useMemo(() => {
+    if (!currentClinic || !doctorProfile) return [];
+    
+    // If Main Clinic is selected, show general clinicImages
+    if (currentClinic.id === "main-clinic" || currentClinic.isMain) {
+      if (doctorProfile.clinicImages && Array.isArray(doctorProfile.clinicImages) && doctorProfile.clinicImages.length > 0) {
+        return doctorProfile.clinicImages;
+      }
+    } else {
+      // If a branch clinic is selected, show that clinic's images
+      if (currentClinic.images && Array.isArray(currentClinic.images) && currentClinic.images.length > 0) {
+        return currentClinic.images;
+      } else if (currentClinic.image && typeof currentClinic.image === 'string' && currentClinic.image.trim() !== '') {
+        return [currentClinic.image];
+      }
+    }
+    
+    return [];
+  }, [currentClinic, doctorProfile]);
+
+  // Show loading or not found - must be after all hooks
   if (!doctor) {
     return (
       <Box sx={{ textAlign: "center", mt: 10 }}>
@@ -76,32 +252,98 @@ const DoctorProfile = () => {
     );
   }
 
-  // Available time slots
-  const clinics = mockClinics;
-
-  // Set default clinic
-  React.useEffect(() => {
-    if (clinics.length > 0 && !selectedClinic) {
-      setSelectedClinic(clinics[0].id.toString());
-    }
-  }, []);
-
-  const currentClinic = clinics.find((c) => c.id.toString() === selectedClinic) || clinics[0];
-
-  // Mock data for reviews
-  const [reviews, setReviews] = useState(initialReviews);
-
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
-  const handleBookAppointment = () => {
-    if (!selectedDate || !selectedTime || !reasonForVisit.trim() || !selectedClinic) {
+  const handleBookAppointment = async () => {
+    // Check if user is logged in
+    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+    if (!currentUser || !currentUser.email) {
+      alert("Please login first to book an appointment");
+      navigate("/login");
+      return;
+    }
+
+    if (!selectedDate || !selectedTime || !reasonForVisit.trim() || !appointmentType) {
       alert("Please fill in all fields");
       return;
     }
-    // Navigate to payment page or show success message
-    alert("Appointment booked successfully!");
+    
+    // Check if the selected time slot is already booked
+    if (bookedSlots.includes(selectedTime)) {
+      alert("هذا الموعد محجوز بالفعل. يرجى اختيار موعد آخر.");
+      return;
+    }
+    
+    // Double check with Firebase before proceeding
+    try {
+      const existingAppointments = await FirestoreService.getAppointments({
+        doctorId: doctorEmail,
+        status: "confirmed",
+      });
+      
+      const localAppointments = JSON.parse(localStorage.getItem("Appointments") || "[]");
+      const allAppointments = [...existingAppointments, ...localAppointments];
+      
+      const isDuplicate = allAppointments.some(apt => {
+        const sameDoctor = apt.doctorId === doctorEmail || 
+                         String(apt.doctorId) === String(doctorEmail) ||
+                         apt.doctorId?.toLowerCase() === doctorEmail?.toLowerCase();
+        const aptDate = apt.date;
+        let sameDate = false;
+        
+        if (typeof aptDate === 'string') {
+          const dateOnly = aptDate.split('T')[0].split(' ')[0];
+          sameDate = dateOnly === selectedDate;
+        } else if (aptDate instanceof Date) {
+          sameDate = aptDate.toISOString().split("T")[0] === selectedDate;
+        } else {
+          sameDate = String(aptDate) === selectedDate;
+        }
+        
+        const sameTime = apt.time === selectedTime;
+        const isActive = apt.status !== "cancelled" && apt.queueStatus !== "completed";
+        
+        return sameDoctor && sameDate && sameTime && isActive;
+      });
+      
+      if (isDuplicate) {
+        alert("هذا الموعد محجوز بالفعل. يرجى اختيار موعد آخر.");
+        return;
+      }
+    } catch (error) {
+      // If check fails, still allow booking (better to allow than block)
+    }
+    
+    // Save appointment data to sessionStorage and navigate to checkout
+    const price = appointmentType === "video" 
+      ? (doctorProfile?.videoCallPrice || currentClinic?.consultationFee || 100)
+      : (doctorProfile?.onsitePrice || currentClinic?.consultationFee || 150);
+    
+    const appointmentData = {
+      doctorId: doctorProfile?.email || doctor.email || id, // Use email as primary ID, fallback to id
+      doctorName: doctorProfile?.fullName || doctor.name,
+      doctorSpecialty: doctorProfile?.specialty || doctor.specialty,
+      doctorAvatar: doctorProfile?.profilePicture || doctor.image || doctorImage,
+      appointmentType,
+      date: selectedDate,
+      time: selectedTime,
+      reason: reasonForVisit,
+      price,
+    };
+    
+    sessionStorage.setItem("pendingAppointment", JSON.stringify(appointmentData));
+    navigate("/checkout?type=appointment");
+  };
+
+  // Get current price based on appointment type
+  const getCurrentPrice = () => {
+    if (appointmentType === "video") {
+      return doctorProfile?.videoCallPrice || currentClinic?.consultationFee || 100;
+    } else {
+      return doctorProfile?.onsitePrice || currentClinic?.consultationFee || 150;
+    }
   };
 
   const handleAddReview = () => {
@@ -165,7 +407,7 @@ const DoctorProfile = () => {
               >
                 <Box sx={{ position: "relative", mb: 2 }}>
                   <Avatar
-                    src={doctorImage}
+                    src={doctorProfile?.profilePicture || doctor.image || doctorImage}
                     alt={doctor.name}
                     sx={{
                       width: { xs: 120, sm: 150, md: 180 },
@@ -300,7 +542,7 @@ const DoctorProfile = () => {
                       About
                     </Typography>
                     <Typography variant="body1" sx={{ mb: 3, lineHeight: 1.8 }}>
-                      {doctor.bio}
+                      {doctorProfile?.bio || doctor.bio || "No bio available."}
                     </Typography>
 
                     <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -341,31 +583,43 @@ const DoctorProfile = () => {
 
                     <Divider sx={{ my: 3 }} />
 
-                    {/* Clinic Images */}
+                    {/* Clinic Images - Show images based on selected clinic */}
                     <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-                      Clinic Photos
+                      {currentClinic?.name || "Clinic"} Photos
                     </Typography>
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                      {clinicImages.map((image, index) => (
-                        <Grid size={{ xs: 12, sm: 4 }} key={index}>
-                          <Box
-                            component="img"
-                            src={image}
-                            alt={`Clinic ${index + 1}`}
-                            sx={{
-                              width: "100%",
-                              height: 200,
-                              objectFit: "cover",
-                              borderRadius: 2,
-                              cursor: "pointer",
-                              "&:hover": {
-                                opacity: 0.8,
-                              },
-                            }}
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
+                    {currentClinicImages.length > 0 ? (
+                      <Grid container spacing={2} sx={{ mb: 3 }}>
+                        {currentClinicImages.map((image, index) => {
+                          if (!image || typeof image !== 'string' || image.trim() === '') return null;
+                          return (
+                            <Grid size={{ xs: 12, sm: 4 }} key={`clinic-${currentClinic?.id || 'clinic'}-img-${index}`}>
+                              <Box
+                                component="img"
+                                src={image}
+                                alt={`${currentClinic?.name || "Clinic"} Photo ${index + 1}`}
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                                sx={{
+                                  width: "100%",
+                                  height: 200,
+                                  objectFit: "cover",
+                                  borderRadius: 2,
+                                  cursor: "pointer",
+                                  "&:hover": {
+                                    opacity: 0.8,
+                                  },
+                                }}
+                              />
+                            </Grid>
+                          );
+                        })}
+                      </Grid>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 3, fontStyle: "italic" }}>
+                        No photos available for {currentClinic?.name || "this clinic"}.
+                      </Typography>
+                    )}
 
                     <Divider sx={{ my: 3 }} />
 
@@ -542,7 +796,82 @@ const DoctorProfile = () => {
                       </FormControl>
                     )}
 
-                    {/* Consultation Fee */}
+                    {/* Appointment Type Selection */}
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600, mb: 2, fontSize: { xs: "0.875rem", sm: "1rem" } }}
+                    >
+                      Appointment Type
+                    </Typography>
+                    <FormControl component="fieldset" fullWidth sx={{ mb: 3 }}>
+                      <RadioGroup
+                        value={appointmentType}
+                        onChange={(e) => setAppointmentType(e.target.value)}
+                        row
+                        sx={{
+                          display: "flex",
+                          gap: { xs: 1, sm: 2 },
+                          flexDirection: { xs: "column", sm: "row" },
+                        }}
+                      >
+                        <FormControlLabel
+                          value="video"
+                          control={<Radio />}
+                          label={
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <VideocamIcon sx={{ fontSize: 20 }} />
+                              <Box>
+                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                  Video Call
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  ${doctorProfile?.videoCallPrice || currentClinic?.consultationFee || 100}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          }
+                          sx={{
+                            border: appointmentType === "video" ? "2px solid #1E88E5" : "2px solid #E0E0E0",
+                            borderRadius: 2,
+                            px: 2,
+                            py: 1.5,
+                            flex: 1,
+                            "&:hover": {
+                              borderColor: "#1E88E5",
+                            },
+                          }}
+                        />
+                        <FormControlLabel
+                          value="onsite"
+                          control={<Radio />}
+                          label={
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                              <LocalHospitalIcon sx={{ fontSize: 20 }} />
+                              <Box>
+                                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                                  On-site Visit
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  ${doctorProfile?.onsitePrice || currentClinic?.consultationFee || 150}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          }
+                          sx={{
+                            border: appointmentType === "onsite" ? "2px solid #1E88E5" : "2px solid #E0E0E0",
+                            borderRadius: 2,
+                            px: 2,
+                            py: 1.5,
+                            flex: 1,
+                            "&:hover": {
+                              borderColor: "#1E88E5",
+                            },
+                          }}
+                        />
+                      </RadioGroup>
+                    </FormControl>
+
+                    {/* Price Display */}
                     <Paper
                       elevation={0}
                       sx={{
@@ -557,10 +886,10 @@ const DoctorProfile = () => {
                     >
                       <AttachMoneyIcon sx={{ color: "#1E88E5" }} />
                       <Typography variant="body2" sx={{ color: "#555555" }}>
-                        Consultation Fee:
+                        {appointmentType === "video" ? "Video Call" : "On-site Visit"} Price:
                       </Typography>
                       <Typography variant="h6" sx={{ fontWeight: "bold", color: "#1E88E5" }}>
-                        ${currentClinic.consultationFee}
+                        ${getCurrentPrice()}
                       </Typography>
                     </Paper>
 
@@ -608,25 +937,46 @@ const DoctorProfile = () => {
                         mb: 3,
                       }}
                     >
-                      {availableSlots.map((slot) => (
-                        <Chip
-                          key={slot}
-                          label={slot}
-                          onClick={() => setSelectedTime(slot)}
-                          sx={{
-                            cursor: "pointer",
-                            backgroundColor:
-                              selectedTime === slot ? "#1E88E5" : "white",
-                            color: selectedTime === slot ? "white" : "#1E88E5",
-                            border: "1px solid #1E88E5",
-                            fontWeight: selectedTime === slot ? 600 : 400,
-                            "&:hover": {
-                              backgroundColor:
-                                selectedTime === slot ? "#005CB2" : "#E3F2FD",
-                            },
-                          }}
-                        />
-                      ))}
+                      {availableSlots.map((slot) => {
+                        const isBooked = bookedSlots.includes(slot);
+                        return (
+                          <Chip
+                            key={slot}
+                            label={isBooked ? `${slot} (محجوز)` : slot}
+                            onClick={() => {
+                              if (!isBooked) {
+                                setSelectedTime(slot);
+                              }
+                            }}
+                            disabled={isBooked}
+                            sx={{
+                              cursor: isBooked ? "not-allowed" : "pointer",
+                              backgroundColor: isBooked
+                                ? "#F5F5F5"
+                                : selectedTime === slot
+                                ? "#1E88E5"
+                                : "white",
+                              color: isBooked
+                                ? "#9E9E9E"
+                                : selectedTime === slot
+                                ? "white"
+                                : "#1E88E5",
+                              border: isBooked
+                                ? "1px solid #E0E0E0"
+                                : "1px solid #1E88E5",
+                              fontWeight: selectedTime === slot ? 600 : 400,
+                              opacity: isBooked ? 0.6 : 1,
+                              "&:hover": {
+                                backgroundColor: isBooked
+                                  ? "#F5F5F5"
+                                  : selectedTime === slot
+                                  ? "#005CB2"
+                                  : "#E3F2FD",
+                              },
+                            }}
+                          />
+                        );
+                      })}
                     </Box>
 
                     <Typography
@@ -747,7 +1097,7 @@ const DoctorProfile = () => {
                       fontSize: { xs: "1.75rem", sm: "2rem" },
                     }}
                   >
-                    #{currentClinic.queueData.nowServing}
+                    #{currentClinic?.queueData?.nowServing || 0}
                   </Typography>
                 </Box>
 
@@ -766,7 +1116,7 @@ const DoctorProfile = () => {
                       fontSize: { xs: "1.25rem", sm: "1.5rem" },
                     }}
                   >
-                    ~ {currentClinic.queueData.estimatedWait} min
+                    ~ {currentClinic?.queueData?.estimatedWait || 0} min
                   </Typography>
                 </Box>
 
@@ -777,7 +1127,7 @@ const DoctorProfile = () => {
                     fontSize: { xs: "0.7rem", sm: "0.75rem" },
                   }}
                 >
-                  Last updated: {currentClinic.queueData.lastUpdated}
+                  Last updated: {currentClinic?.queueData?.lastUpdated || new Date().toLocaleTimeString()}
                 </Typography>
               </CardContent>
             </Card>

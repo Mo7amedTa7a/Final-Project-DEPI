@@ -16,7 +16,7 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import userImage from "../../assets/user.svg";
 import logoImage from "../../assets/Logo_2.png";
 
@@ -66,7 +66,6 @@ const Header = ({ open, handleDrawerToggle }) => {
           setUserData(parsedData);
           setIsLoggedIn(true);
         } catch (error) {
-          console.error("Error parsing user data:", error);
           setIsLoggedIn(false);
         }
       } else {
@@ -121,7 +120,6 @@ const Header = ({ open, handleDrawerToggle }) => {
           const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
           setCartCount(totalItems);
         } catch (error) {
-          console.error("Error loading cart:", error);
           setCartCount(0);
         }
       } else {
@@ -190,7 +188,12 @@ const Header = ({ open, handleDrawerToggle }) => {
                 }}
               >
                 <Avatar
-                  src={userData?.patientProfile?.profilePicture || userImage}
+                  src={
+                    userData?.patientProfile?.profilePicture ||
+                    userData?.doctorProfile?.profilePicture ||
+                    userData?.pharmacyProfile?.profilePicture ||
+                    userImage
+                  }
                   alt="User"
                   sx={{ width: 40, height: 40 }}
                 />

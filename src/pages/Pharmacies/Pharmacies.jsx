@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import pharmaciesData from "../../Data/Pharmacies.json";
+import React, { useState, useEffect, useMemo } from "react";
 import Grid from '@mui/material/Grid';
 import {
   Box,
@@ -20,56 +19,18 @@ import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useNavigate, useSearchParams } from "react-router";
+import { usePharmacies } from "../../hooks/useData";
 
 const Pharmacies = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [pharmacies, setPharmacies] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
   const [locationFilter, setLocationFilter] = useState("All");
   const [governorateFilter, setGovernorateFilter] = useState(searchParams.get('governorate') || "All");
-  const [filteredPharmacies, setFilteredPharmacies] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // تحميل البيانات من localStorage و JSON
-    const loadData = () => {
-      try {
-        // تحميل الصيدليات المسجلة من localStorage
-        const users = JSON.parse(localStorage.getItem("Users") || "[]");
-        const registeredPharmacies = users
-          .filter((user) => user.role === "Pharmacy" && user.pharmacyProfile)
-          .map((user) => ({
-            id: user.email, // استخدام email كـ id
-            name: user.pharmacyProfile.pharmacyName,
-            shortName: user.pharmacyProfile.shortName,
-            location: user.pharmacyProfile.location,
-            address: user.pharmacyProfile.address,
-            phone: user.pharmacyProfile.phoneNumber,
-            email: user.pharmacyProfile.email,
-            hours: user.pharmacyProfile.hours,
-            rating: 4.5, // Default rating
-            reviews: 0, // Default reviews
-            image: user.pharmacyProfile.profilePicture || null,
-            isRegistered: true, // علامة للصيدليات المسجلة
-          }));
-
-        // دمج الصيدليات المسجلة مع الصيدليات من JSON
-        const allPharmacies = [...registeredPharmacies, ...pharmaciesData];
-        
-        setPharmacies(allPharmacies);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error loading pharmacies:", error);
-        // Fallback to JSON data only
-        setPharmacies(pharmaciesData);
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
+  
+  // Use dynamic data hook
+  const { pharmacies, isLoading } = usePharmacies();
 
   // Extract governorate from location (assuming format like "City, Governorate" or just "Governorate")
   const getGovernorate = (location) => {
@@ -79,12 +40,13 @@ const Pharmacies = () => {
     return parts.length > 1 ? parts[parts.length - 1] : parts[0];
   };
 
-  useEffect(() => {
-    const results = pharmacies.filter((pharmacy) => {
+  // Filter pharmacies
+  const filteredPharmacies = useMemo(() => {
+    return pharmacies.filter((pharmacy) => {
       // Filter by search term (name or location)
       const matchesSearch =
         searchTerm === "" ||
-        pharmacy.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pharmacy.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (pharmacy.location && pharmacy.location.toLowerCase().includes(searchTerm.toLowerCase()));
 
       // Filter by location (city)
@@ -100,7 +62,6 @@ const Pharmacies = () => {
 
       return matchesSearch && matchesLocation && matchesGovernorate;
     });
-    setFilteredPharmacies(results);
   }, [searchTerm, locationFilter, governorateFilter, pharmacies]);
 
   // Get unique locations for filter

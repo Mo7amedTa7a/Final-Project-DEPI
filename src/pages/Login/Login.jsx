@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, Grid, Typography, TextField, Button, Paper, Alert, Snackbar } from "@mui/material";
 import { useNavigate, Link } from "react-router";
+import FirestoreService from "../../services/FirestoreService";
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ export default function Login() {
     if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Form inputs check
@@ -27,25 +28,16 @@ export default function Login() {
       return;
     }
 
-    // الحصول على array المستخدمين من localStorage
-    const storedUsers = localStorage.getItem("Users");
-    if (!storedUsers) {
-      setError("لا يوجد حساب. يرجى التسجيل أولاً.");
-      return;
-    }
-
     try {
-      const users = JSON.parse(storedUsers);
-      // البحث عن المستخدم بالبريد الإلكتروني وكلمة المرور
-      const user = users.find(
-        (u) => u.email === formData.email && u.password === formData.password
-      );
+      // البحث عن المستخدم في Firebase بالبريد الإلكتروني
+      const user = await FirestoreService.getUserByEmail(formData.email);
 
-      if (user) {
-        // تسجيل الدخول ناجح - حفظ المستخدم الحالي
+      if (user && user.password === formData.password) {
+        // تسجيل الدخول ناجح - حفظ المستخدم الحالي في localStorage (للسهولة)
         localStorage.setItem("CurrentUser", JSON.stringify(user));
         setSuccessToast(true);
         setError("");
+        
         // توجيه المستخدم حسب الـ role واكتمال الملف الشخصي
         setTimeout(() => {
           if (user.role === "Patient" && !user.patientProfile) {
@@ -63,7 +55,8 @@ export default function Login() {
         setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
       }
     } catch (error) {
-      setError("خطأ في قراءة البيانات");
+      console.error("Error logging in:", error);
+      setError("حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.");
     }
   };
 

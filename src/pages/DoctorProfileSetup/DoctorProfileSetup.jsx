@@ -26,6 +26,7 @@ import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router";
+import FirestoreService from "../../services/FirestoreService";
 
 export default function DoctorProfileSetup() {
   const navigate = useNavigate();
@@ -38,6 +39,8 @@ export default function DoctorProfileSetup() {
     address: "",
     bio: "",
     consultationFee: "",
+    videoCallPrice: "",
+    onsitePrice: "",
     conditionsTreated: [],
     servicesOffered: [],
     clinicImages: [],
@@ -69,6 +72,8 @@ export default function DoctorProfileSetup() {
         address: currentUser.doctorProfile.address || "",
         bio: currentUser.doctorProfile.bio || "",
         consultationFee: currentUser.doctorProfile.consultationFee || "",
+        videoCallPrice: currentUser.doctorProfile.videoCallPrice || "",
+        onsitePrice: currentUser.doctorProfile.onsitePrice || "",
         conditionsTreated: currentUser.doctorProfile.conditionsTreated || [],
         servicesOffered: currentUser.doctorProfile.servicesOffered || [],
         clinicImages: currentUser.doctorProfile.clinicImages || [],
@@ -99,7 +104,6 @@ export default function DoctorProfileSetup() {
         const compressed = await compressImage(file, 400, 400, 0.8);
         setFormData((prev) => ({ ...prev, profilePicture: compressed }));
       } catch (error) {
-        console.error("Error compressing image:", error);
         // Fallback to original if compression fails
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -190,6 +194,32 @@ export default function DoctorProfileSetup() {
     });
   };
 
+
+  const handleAddClinic = () => {
+    setFormData((prev) => ({
+      ...prev,
+      clinics: [
+        ...prev.clinics,
+        {
+          id: Date.now(),
+          name: "",
+          address: "",
+          consultationFee: prev.consultationFee || "",
+          images: [],
+        },
+      ],
+    }));
+  };
+
+  const handleClinicChange = (id, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      clinics: prev.clinics.map((clinic) =>
+        clinic.id === id ? { ...clinic, [field]: value } : clinic
+      ),
+    }));
+  };
+
   const handleClinicImagesUpload = async (e) => {
     const files = Array.from(e.target.files);
     const compressedImages = [];
@@ -199,13 +229,12 @@ export default function DoctorProfileSetup() {
         const compressed = await compressImage(file, 600, 600, 0.6);
         compressedImages.push(compressed);
       } catch (error) {
-        console.error("Error compressing image:", error);
         // Fallback: try to compress with lower quality
         try {
           const compressed = await compressImage(file, 400, 400, 0.5);
           compressedImages.push(compressed);
         } catch (err) {
-          console.error("Failed to compress image, skipping:", err);
+          // Failed to compress image, skipping
         }
       }
     }
@@ -225,26 +254,44 @@ export default function DoctorProfileSetup() {
     }));
   };
 
-  const handleAddClinic = () => {
-    setFormData((prev) => ({
-      ...prev,
-      clinics: [
-        ...prev.clinics,
-        {
-          id: Date.now(),
-          name: "",
-          address: "",
-          consultationFee: prev.consultationFee || "",
-        },
-      ],
-    }));
+  const handleClinicImagesUploadForClinic = async (clinicId, e) => {
+    const files = Array.from(e.target.files);
+    const compressedImages = [];
+
+    for (const file of files) {
+      try {
+        const compressed = await compressImage(file, 600, 600, 0.6);
+        compressedImages.push(compressed);
+      } catch (error) {
+        // Fallback: try to compress with lower quality
+        try {
+          const compressed = await compressImage(file, 400, 400, 0.5);
+          compressedImages.push(compressed);
+        } catch (err) {
+          // Failed to compress image, skipping
+        }
+      }
+    }
+
+    if (compressedImages.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        clinics: prev.clinics.map((clinic) =>
+          clinic.id === clinicId
+            ? { ...clinic, images: [...(clinic.images || []), ...compressedImages] }
+            : clinic
+        ),
+      }));
+    }
   };
 
-  const handleClinicChange = (id, field, value) => {
+  const handleRemoveClinicImageFromClinic = (clinicId, imageIndex) => {
     setFormData((prev) => ({
       ...prev,
       clinics: prev.clinics.map((clinic) =>
-        clinic.id === id ? { ...clinic, [field]: value } : clinic
+        clinic.id === clinicId
+          ? { ...clinic, images: clinic.images.filter((_, i) => i !== imageIndex) }
+          : clinic
       ),
     }));
   };
@@ -269,7 +316,7 @@ export default function DoctorProfileSetup() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // التحقق من الحقول المطلوبة
@@ -280,54 +327,61 @@ export default function DoctorProfileSetup() {
       !formData.phoneNumber ||
       !formData.address ||
       !formData.bio ||
-      !formData.consultationFee
+      !formData.videoCallPrice ||
+      !formData.onsitePrice
     ) {
-      setError("Please fill in all required fields");
+      setError("Please fill in all required fields including pricing");
       return;
     }
 
     try {
       // الحصول على بيانات المستخدم الحالي
       const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
-      const users = JSON.parse(localStorage.getItem("Users") || "[]");
+      
+      if (!currentUser.email) {
+        setError("User not found. Please login again.");
+        return;
+      }
 
+      // تصفية العيادات الفارغة (التي لا تحتوي على name أو address)
+      const validClinics = formData.clinics.filter(
+        (clinic) => clinic.name && clinic.name.trim() !== "" && clinic.address && clinic.address.trim() !== ""
+      );
+      
       // إضافة بيانات الملف الشخصي للطبيب
-      const updatedUser = {
-        ...currentUser,
-        doctorProfile: {
-          profilePicture: formData.profilePicture,
-          fullName: currentUser.name,
-          email: currentUser.email,
-          specialty: formData.specialty,
-          experience: formData.experience,
-          education: formData.education,
-          phoneNumber: formData.phoneNumber,
-          address: formData.address,
-          bio: formData.bio,
-          consultationFee: formData.consultationFee,
-          conditionsTreated: formData.conditionsTreated,
-          servicesOffered: formData.servicesOffered,
-          clinicImages: formData.clinicImages,
-          clinics: formData.clinics,
-          schedule: formData.schedule,
-        },
+      const doctorProfile = {
+        profilePicture: formData.profilePicture,
+        fullName: currentUser.name,
+        email: currentUser.email,
+        specialty: formData.specialty,
+        experience: formData.experience,
+        education: formData.education,
+        phoneNumber: formData.phoneNumber,
+        address: formData.address,
+        bio: formData.bio,
+        consultationFee: formData.consultationFee,
+        videoCallPrice: formData.videoCallPrice,
+        onsitePrice: formData.onsitePrice,
+        conditionsTreated: formData.conditionsTreated,
+        servicesOffered: formData.servicesOffered,
+        clinicImages: formData.clinicImages,
+        clinics: validClinics, // حفظ العيادات الصحيحة فقط
+        schedule: formData.schedule,
       };
 
-      // تحديث المستخدم الحالي
-      localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
+      // تحديث المستخدم في Firebase
+      const updatedUser = await FirestoreService.updateUser(currentUser.email, {
+        doctorProfile: doctorProfile,
+      });
 
-      // تحديث المستخدم في array المستخدمين
-      const updatedUsers = users.map((user) =>
-        user.email === updatedUser.email ? updatedUser : user
-      );
-      localStorage.setItem("Users", JSON.stringify(updatedUsers));
+      // تحديث المستخدم الحالي في localStorage
+      localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
     } catch (error) {
       if (error.name === "QuotaExceededError") {
         setError("Storage limit exceeded. Please reduce the number or size of images.");
         return;
       }
       setError("An error occurred while saving. Please try again.");
-      console.error("Error saving profile:", error);
       return;
     }
 
@@ -336,7 +390,7 @@ export default function DoctorProfileSetup() {
 
     // الانتقال للصفحة الرئيسية بعد الحفظ
     setTimeout(() => {
-      navigate("/");
+      navigate("/account");
       window.location.reload();
     }, 1500);
   };
@@ -466,6 +520,9 @@ export default function DoctorProfileSetup() {
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, mt: 3 }}>
             Contact Details
           </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            This address will be used as your <strong>main clinic address</strong> and will appear first in your profile.
+          </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 3 }}>
             <TextField
               fullWidth
@@ -479,7 +536,7 @@ export default function DoctorProfileSetup() {
 
             <TextField
               fullWidth
-              label="Address"
+              label="Main Clinic Address"
               name="address"
               multiline
               rows={3}
@@ -487,20 +544,36 @@ export default function DoctorProfileSetup() {
               onChange={handleChange}
               placeholder="123 Main Street, City, State, ZIP"
               required
+              helperText="This is your main clinic address. It will appear first in your profile."
             />
           </Box>
 
-          {/* Consultation Fee */}
+          {/* Pricing */}
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, mt: 3 }}>
-            Consultation Fee
+            Pricing
           </Typography>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 3, display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               fullWidth
-              label="Consultation Fee (USD)"
-              name="consultationFee"
+              label="Video Call Price (USD)"
+              name="videoCallPrice"
               type="number"
-              value={formData.consultationFee}
+              value={formData.videoCallPrice}
+              onChange={handleChange}
+              placeholder="100"
+              required
+              inputProps={{ min: 0 }}
+              InputProps={{
+                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+              }}
+              helperText="Price for online video consultations"
+            />
+            <TextField
+              fullWidth
+              label="On-site Visit Price (USD)"
+              name="onsitePrice"
+              type="number"
+              value={formData.onsitePrice}
               onChange={handleChange}
               placeholder="150"
               required
@@ -508,6 +581,21 @@ export default function DoctorProfileSetup() {
               InputProps={{
                 startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
               }}
+              helperText="Price for in-clinic appointments"
+            />
+            <TextField
+              fullWidth
+              label="General Consultation Fee (USD) - Optional"
+              name="consultationFee"
+              type="number"
+              value={formData.consultationFee}
+              onChange={handleChange}
+              placeholder="150"
+              inputProps={{ min: 0 }}
+              InputProps={{
+                startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+              }}
+              helperText="General consultation fee (optional, for backward compatibility)"
             />
           </Box>
 
@@ -630,7 +718,7 @@ export default function DoctorProfileSetup() {
           {/* Clinics/Branches */}
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
             <Typography variant="h6" fontWeight="bold">
-              Clinics/Branches (Optional)
+              Additional Clinics/Branches (Optional)
             </Typography>
             <Button
               variant="outlined"
@@ -642,7 +730,7 @@ export default function DoctorProfileSetup() {
             </Button>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Add multiple clinic locations if you have branches
+            Add additional clinic locations if you have branches. Your main clinic address (from Contact Details above) will appear first.
           </Typography>
 
           {formData.clinics.map((clinic) => (
@@ -694,6 +782,67 @@ export default function DoctorProfileSetup() {
                         startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
                       }}
                     />
+                  </Grid>
+                  <Grid size={12}>
+                    <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                      Clinic Photos (Optional) - Multiple images allowed
+                    </Typography>
+                    <input
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      id={`clinic-images-upload-${clinic.id}`}
+                      type="file"
+                      multiple
+                      onChange={(e) => handleClinicImagesUploadForClinic(clinic.id, e)}
+                    />
+                    <label htmlFor={`clinic-images-upload-${clinic.id}`}>
+                      <Button
+                        component="span"
+                        variant="outlined"
+                        startIcon={<CameraAltIcon />}
+                        sx={{ textTransform: "none", mb: 2 }}
+                        fullWidth
+                      >
+                        Upload Clinic Photos
+                      </Button>
+                    </label>
+                    {clinic.images && clinic.images.length > 0 && (
+                      <Grid container spacing={2} sx={{ mt: 1 }}>
+                        {clinic.images.map((image, imageIndex) => (
+                          <Grid size={{ xs: 6, sm: 4, md: 3 }} key={imageIndex}>
+                            <Box sx={{ position: "relative" }}>
+                              <Box
+                                component="img"
+                                src={image}
+                                alt={clinic.name || `Clinic Photo ${imageIndex + 1}`}
+                                sx={{
+                                  width: "100%",
+                                  height: 150,
+                                  objectFit: "cover",
+                                  borderRadius: 2,
+                                  border: "1px solid #E0E0E0",
+                                }}
+                              />
+                              <IconButton
+                                size="small"
+                                onClick={() => handleRemoveClinicImageFromClinic(clinic.id, imageIndex)}
+                                sx={{
+                                  position: "absolute",
+                                  top: 4,
+                                  right: 4,
+                                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                                  "&:hover": {
+                                    backgroundColor: "rgba(255, 255, 255, 1)",
+                                  },
+                                }}
+                              >
+                                <DeleteIcon fontSize="small" color="error" />
+                              </IconButton>
+                            </Box>
+                          </Grid>
+                        ))}
+                      </Grid>
+                    )}
                   </Grid>
                 </Grid>
               </CardContent>

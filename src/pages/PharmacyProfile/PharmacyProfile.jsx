@@ -28,11 +28,11 @@ import ContactInfo from "./ContactInfo";
 import Cart from "./Cart";
 import MedicationCard from "./MedicationCard";
 import OrderTimeline from "./OrderTimeline";
-import Data from "../../Data/Pharmacies.json";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { medicationCategories } from "../../Data/MedicationCategories";
+import { usePharmacies } from "../../hooks/useData";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
@@ -54,48 +54,30 @@ const PharmacyProfile = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
 
+  // Use dynamic data hook
+  const { pharmacies, getPharmacyById, isLoading } = usePharmacies();
+
   useEffect(() => {
-    // Always use the id from URL to find the pharmacy
-    const users = JSON.parse(localStorage.getItem("Users") || "[]");
-    let foundPharmacy = null;
-    
-    // Check if id is an email (from registered pharmacies) or a number (from JSON)
-    if (isNaN(Number(id))) {
-      // id is an email, search in registered pharmacies
-      const pharmacyUser = users.find(
-        (user) => user.role === "Pharmacy" && user.pharmacyProfile && user.email === id
-      );
-      
-      if (pharmacyUser && pharmacyUser.pharmacyProfile) {
-        foundPharmacy = {
-          id: pharmacyUser.email,
-          name: pharmacyUser.pharmacyProfile.pharmacyName,
-          shortName: pharmacyUser.pharmacyProfile.shortName,
-          image: pharmacyUser.pharmacyProfile.profilePicture || "https://i.pravatar.cc/150",
-          address: pharmacyUser.pharmacyProfile.address,
-          location: pharmacyUser.pharmacyProfile.location,
-          phone: pharmacyUser.pharmacyProfile.phoneNumber,
-          email: pharmacyUser.pharmacyProfile.email,
-          hours: pharmacyUser.pharmacyProfile.hours,
-          description: pharmacyUser.pharmacyProfile.description || "",
-          rating: 4.5,
-          reviews: 0,
-          isTopRated: false,
-          products: pharmacyUser.pharmacyProfile.products || [],
-        };
-      }
-    } else {
-      // id is a number, search in JSON data
-      foundPharmacy = Data.find((p) => p.id === Number(id));
+    // Wait for data to load
+    if (isLoading) {
+      return;
     }
-    
-    // If not found in registered pharmacies or JSON, use fallback
-    if (!foundPharmacy) {
-      foundPharmacy = Data[0] || null;
-    }
-    
+
+    // Load pharmacy data
+    const foundPharmacy = getPharmacyById(id);
     if (foundPharmacy) {
-      setPharmacy(foundPharmacy);
+      // Map to expected format
+      const mappedPharmacy = {
+        ...foundPharmacy,
+        shortName: foundPharmacy.shortName || foundPharmacy.name,
+        image: foundPharmacy.image || "https://i.pravatar.cc/150",
+        description: foundPharmacy.description || "",
+        rating: foundPharmacy.rating || 4.5,
+        reviews: foundPharmacy.reviews || 0,
+        isTopRated: foundPharmacy.isTopRated || false,
+        products: foundPharmacy.products || [],
+      };
+      setPharmacy(mappedPharmacy);
       
       // Load reviews from localStorage
       const reviewsKey = `pharmacyReviews_${foundPharmacy.id}`;
@@ -105,27 +87,25 @@ const PharmacyProfile = () => {
       } else {
         setReviews([]);
       }
-    }
 
-    // Load cart from localStorage (for display purposes only)
-    if (foundPharmacy) {
+      // Load cart from localStorage (for display purposes only)
       const savedCart = localStorage.getItem("Cart");
       if (savedCart) {
         try {
           const cartData = JSON.parse(savedCart);
           // Filter cart items for this pharmacy
           const pharmacyCart = cartData.filter(
-            (item) => item.pharmacyId === foundPharmacy.id
+            (item) => item.pharmacyId === foundPharmacy.id || item.pharmacyId === foundPharmacy.id.toString()
           );
           setCart(pharmacyCart);
         } catch (error) {
-          console.error("Error loading cart:", error);
+          // Error loading cart
         }
       }
     }
-  }, [id]);
+  }, [id, getPharmacyById, isLoading, pharmacies]);
 
-  if (!pharmacy) {
+  if (isLoading || !pharmacy) {
     return (
       <Container maxWidth="lg" sx={{ py: 4, textAlign: "center" }}>
         <Typography variant="h6">Loading pharmacy data...</Typography>
@@ -134,6 +114,14 @@ const PharmacyProfile = () => {
   }
 
   const handleAddToCart = (medication) => {
+    // Check if user is logged in
+    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+    if (!currentUser || !currentUser.email) {
+      alert("Please login first to add items to cart");
+      navigate("/login");
+      return;
+    }
+
     // Get cart from localStorage
     const savedCart = localStorage.getItem("Cart");
     const currentCart = savedCart ? JSON.parse(savedCart) : [];
@@ -221,7 +209,7 @@ const PharmacyProfile = () => {
       try {
         localStorage.setItem(reviewsKey, JSON.stringify(updatedReviews));
       } catch (error) {
-        console.error("Error saving review:", error);
+        // Error saving review
       }
     }
   };
@@ -432,8 +420,8 @@ const PharmacyProfile = () => {
                             color: theme.palette.primary.main,
                           },
                         }}
-              />
-            </Box>
+                      />
+                    </Box>
                     <TextField
                       fullWidth
                       multiline

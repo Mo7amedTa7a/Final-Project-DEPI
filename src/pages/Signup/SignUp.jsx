@@ -4,6 +4,7 @@ import { Person } from "@mui/icons-material";
 import VaccinesRoundedIcon from '@mui/icons-material/VaccinesRounded';
 import HealingRoundedIcon from '@mui/icons-material/HealingRounded';
 import { Link, useNavigate } from "react-router";
+import FirestoreService from "../../services/FirestoreService";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -31,55 +32,57 @@ export default function Signup() {
 
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-
-   // Form inputs check
+    // Form inputs check
     if (!formData.name || !formData.email || !formData.password || !formData.role ) {
       setError("Please fill in all fields");
-      return
-    }
-
-    // الحصول على array المستخدمين من localStorage
-    const storedUsers = localStorage.getItem("Users");
-    let users = storedUsers ? JSON.parse(storedUsers) : [];
-
-    // التحقق من وجود حساب بنفس البريد الإلكتروني
-    const existingUser = users.find(user => user.email === formData.email);
-    if (existingUser) {
-      setError("هذا الحساب موجود بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.");
       return;
     }
 
-    // إنشاء حساب جديد وإضافته للـ array
-    const newUser = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: formData.role
-    };
-    
-    users.push(newUser);
-    localStorage.setItem("Users", JSON.stringify(users));
-    
-    // حفظ المستخدم الحالي
-    localStorage.setItem("CurrentUser", JSON.stringify(newUser));
-    setSuccessToast(true);
-    setError("");
-    // توجيه المستخدم حسب الـ role
-    setTimeout(() => {
-      if (newUser.role === "Patient") {
-        navigate("/patient-profile-setup");
-      } else if (newUser.role === "Doctor") {
-        navigate("/doctor-profile-setup");
-      } else if (newUser.role === "Pharmacy") {
-        navigate("/pharmacy-profile-setup");
-      } else {
-        navigate("/");
-        window.location.reload();
+    try {
+      // التحقق من وجود حساب بنفس البريد الإلكتروني في Firebase
+      const existingUser = await FirestoreService.getUserByEmail(formData.email);
+      if (existingUser) {
+        setError("هذا الحساب موجود بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.");
+        return;
       }
-    }, 2000);
+
+      // إنشاء حساب جديد في Firebase
+      const newUser = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role
+      };
+      
+      // حفظ المستخدم في Firebase
+      await FirestoreService.addUser(newUser);
+      
+      // حفظ المستخدم الحالي في localStorage (للسهولة)
+      localStorage.setItem("CurrentUser", JSON.stringify(newUser));
+      
+      setSuccessToast(true);
+      setError("");
+      
+      // توجيه المستخدم حسب الـ role
+      setTimeout(() => {
+        if (newUser.role === "Patient") {
+          navigate("/patient-profile-setup");
+        } else if (newUser.role === "Doctor") {
+          navigate("/doctor-profile-setup");
+        } else if (newUser.role === "Pharmacy") {
+          navigate("/pharmacy-profile-setup");
+        } else {
+          navigate("/");
+          window.location.reload();
+        }
+      }, 2000);
+    } catch (error) {
+      console.error("Error signing up:", error);
+      setError("حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Container,
@@ -18,6 +18,7 @@ import {
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import InfoIcon from "@mui/icons-material/Info";
 import { useNavigate } from "react-router";
+import FirestoreService from "../../services/FirestoreService";
 
 export default function PatientProfileSetup() {
   const navigate = useNavigate();
@@ -25,13 +26,28 @@ export default function PatientProfileSetup() {
     profilePicture: null,
     gender: "",
     age: "",
-    phoneNumber: "(123) 456-7880",
-    address: "123 Main Street, Anytown, USA 12345",
+    phoneNumber: "",
+    address: "",
     chronicConditions: "",
   });
 
   const [successToast, setSuccessToast] = useState(false);
   const [error, setError] = useState("");
+
+  // Load existing data if available
+  useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+    if (currentUser.patientProfile) {
+      setFormData({
+        profilePicture: currentUser.patientProfile.profilePicture || null,
+        gender: currentUser.patientProfile.gender || "",
+        age: currentUser.patientProfile.age || "",
+        phoneNumber: currentUser.patientProfile.phoneNumber || "",
+        address: currentUser.patientProfile.address || "",
+        chronicConditions: currentUser.patientProfile.chronicConditions || "",
+      });
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,7 +66,7 @@ export default function PatientProfileSetup() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // التحقق من الحقول المطلوبة
@@ -59,41 +75,46 @@ export default function PatientProfileSetup() {
       return;
     }
 
-    // الحصول على بيانات المستخدم الحالي
-    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
-    const users = JSON.parse(localStorage.getItem("Users") || "[]");
+    try {
+      // الحصول على بيانات المستخدم الحالي
+      const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+      
+      if (!currentUser.email) {
+        setError("User not found. Please login again.");
+        return;
+      }
 
-    // إضافة بيانات الملف الشخصي للمستخدم (استخدام name و email من بيانات المستخدم)
-    const updatedUser = {
-      ...currentUser,
-      patientProfile: {
+      // إضافة بيانات الملف الشخصي للمستخدم
+      const patientProfile = {
         profilePicture: formData.profilePicture,
-        fullName: currentUser.name, // استخدام الاسم من بيانات المستخدم
+        fullName: currentUser.name,
         gender: formData.gender,
         age: formData.age,
         phoneNumber: formData.phoneNumber,
-        email: currentUser.email, // استخدام الإيميل من بيانات المستخدم
+        email: currentUser.email,
         address: formData.address,
         chronicConditions: formData.chronicConditions,
-      },
-    };
+      };
 
-    // تحديث المستخدم الحالي
-    localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
+      // تحديث المستخدم في Firebase
+      const updatedUser = await FirestoreService.updateUser(currentUser.email, {
+        patientProfile: patientProfile,
+      });
 
-    // تحديث المستخدم في array المستخدمين
-    const updatedUsers = users.map((user) =>
-      user.email === currentUser.email ? updatedUser : user
-    );
-    localStorage.setItem("Users", JSON.stringify(updatedUsers));
+      // تحديث المستخدم الحالي في localStorage
+      localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
 
-    setSuccessToast(true);
-    setError("");
+      setSuccessToast(true);
+      setError("");
 
-    // الانتقال للصفحة الرئيسية بعد الحفظ
-    setTimeout(() => {
-      navigate("/dashboard");
-    }, 1500);
+      // الانتقال للصفحة الرئيسية بعد الحفظ
+      setTimeout(() => {
+        navigate("/account");
+      }, 1500);
+    } catch (error) {
+      console.error("Error saving patient profile:", error);
+      setError("حدث خطأ أثناء حفظ الملف الشخصي. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   return (

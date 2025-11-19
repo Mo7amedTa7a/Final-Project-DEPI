@@ -16,10 +16,9 @@ import Grid from '@mui/material/Grid';
 import SearchIcon from "@mui/icons-material/Search";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { heroImages } from "../../../Data/HeroSectionData";
-import doctorsData from "../../../Data/Doctors.json";
-import pharmaciesData from "../../../Data/Pharmacies.json";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
+import { useDoctors, usePharmacies } from "../../../hooks/useData";
 
 const HeroSection = ({
   searchTerm,
@@ -34,6 +33,10 @@ const HeroSection = ({
   const theme = useTheme();
   const navigate = useNavigate();
   const images = heroImages;
+  
+  // Use dynamic data hooks
+  const { doctors: doctorsData } = useDoctors();
+  const { pharmacies: pharmaciesData } = usePharmacies();
 
   // Extract governorate from location
   const getGovernorate = (location) => {
@@ -45,14 +48,14 @@ const HeroSection = ({
   // Get unique specialties
   const uniqueSpecialties = useMemo(() => {
     return Array.from(new Set(doctorsData.map((d) => d.specialty).filter((s) => s))).sort();
-  }, []);
+  }, [doctorsData]);
 
   // Get unique governorates from both doctors and pharmacies
   const uniqueGovernorates = useMemo(() => {
     const doctorGovs = doctorsData.map((d) => getGovernorate(d.location)).filter((g) => g);
     const pharmacyGovs = pharmaciesData.map((p) => getGovernorate(p.location)).filter((g) => g);
     return Array.from(new Set([...doctorGovs, ...pharmacyGovs])).sort();
-  }, []);
+  }, [doctorsData, pharmaciesData]);
 
   const handleSearch = () => {
     // Build query parameters

@@ -25,9 +25,11 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import MessageIcon from "@mui/icons-material/Message";
 import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import GroupIcon from "@mui/icons-material/Group";
+import DescriptionIcon from "@mui/icons-material/Description";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { menuItemsConfig, bottomMenuConfig } from "../../Data/SidebarData";
 
 const drawerWidth = 240;
@@ -82,9 +84,18 @@ const Drawer = styled(MuiDrawer, {
 export default function Sidebar({ open, handleDrawerClose }) {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [logoutToast, setLogoutToast] = React.useState(false);
   const [userRole, setUserRole] = React.useState(null);
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
+
+  // إغلاق الـ sidebar تلقائياً عند تغيير الصفحة (خاصة للشاشات الصغيرة)
+  React.useEffect(() => {
+    if (!isLargeScreen && open) {
+      handleDrawerClose();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   React.useEffect(() => {
     // الحصول على role المستخدم من localStorage
@@ -94,7 +105,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
         const userData = JSON.parse(currentUser);
         setUserRole(userData.role);
       } catch (error) {
-        console.error("Error parsing user data:", error);
+        // Error parsing user data
       }
     }
 
@@ -106,7 +117,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
           const userData = JSON.parse(updatedUser);
           setUserRole(userData.role);
         } catch (error) {
-          console.error("Error parsing user data:", error);
+          // Error parsing user data
         }
       } else {
         setUserRole(null);
@@ -143,6 +154,8 @@ export default function Sidebar({ open, handleDrawerClose }) {
     Message: MessageIcon,
     ShoppingBag: ShoppingBagIcon,
     Group: GroupIcon,
+    Description: DescriptionIcon,
+    AccountBalanceWallet: AccountBalanceWalletIcon,
     AccountCircle: AccountCircleIcon,
     Logout: LogoutIcon,
   };
@@ -193,6 +206,12 @@ export default function Sidebar({ open, handleDrawerClose }) {
               <ListItemButton
                 component={Link}
                 to={path}
+                onClick={() => {
+                  // إغلاق الـ sidebar عند الضغط على أي رابط (خاصة للشاشات الصغيرة)
+                  if (!isLargeScreen) {
+                    handleDrawerClose();
+                  }
+                }}
                 sx={{
                   minHeight: 48,
                   justifyContent: open ? "initial" : "center",
@@ -224,7 +243,15 @@ export default function Sidebar({ open, handleDrawerClose }) {
             {bottomMenu.map(({ text, icon, color, action, path }) => (
               <ListItem key={text} disablePadding sx={{ display: "block" }}>
                 <ListItemButton
-                  onClick={action || undefined}
+                  onClick={() => {
+                    if (action) {
+                      action();
+                    }
+                    // إغلاق الـ sidebar عند الضغط على أي رابط (خاصة للشاشات الصغيرة)
+                    if (!isLargeScreen && path) {
+                      handleDrawerClose();
+                    }
+                  }}
                   component={path ? Link : action ? "button" : "div"}
                   to={path || undefined}
                   sx={{
@@ -290,6 +317,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
               <ListItemButton
                 component={Link}
                 to={path}
+                onClick={handleDrawerClose}
                 sx={{
                   minHeight: 48,
                   justifyContent: "initial",
@@ -321,7 +349,14 @@ export default function Sidebar({ open, handleDrawerClose }) {
             {bottomMenu.map(({ text, icon, color, action, path }) => (
               <ListItem key={text} disablePadding sx={{ display: "block" }}>
                 <ListItemButton
-                  onClick={action || undefined}
+                  onClick={() => {
+                    if (action) {
+                      action();
+                    }
+                    if (path) {
+                      handleDrawerClose();
+                    }
+                  }}
                   component={path ? Link : action ? "button" : "div"}
                   to={path || undefined}
                   sx={{

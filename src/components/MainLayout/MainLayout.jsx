@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, CssBaseline, useMediaQuery, useTheme } from "@mui/material";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
-import { Outlet } from "react-router"; // في حال استخدمت React Router
+import { Outlet, useLocation } from "react-router"; // في حال استخدمت React Router
 import Sidebar from "../SideBar/SideBar";
 
 const drawerWidth = 240;
@@ -11,9 +11,15 @@ export default function MainLayout() {
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
   const [open, setOpen] = useState(false); // يبدأ مغلق افتراضياً
+  const location = useLocation();
 
   const handleDrawerToggle = () => setOpen(!open);
   const handleDrawerClose = () => setOpen(false);
+
+  // إغلاق الـ sidebar تلقائياً عند تغيير الصفحة
+  useEffect(() => {
+    setOpen(false);
+  }, [location.pathname]);
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", flexDirection: "column" }}>

@@ -7,6 +7,8 @@ export const menuItemsConfig = [
   { text: "Find Doctor", iconName: "PersonSearch", path: "/finddoctor" },
   { text: "Pharmacies", iconName: "LocalPharmacy", path: "/pharmacies" },
   { text: "Messages", iconName: "Message", path: "/messages" },
+  { text: "Prescriptions", iconName: "Description", path: "/prescriptions", roles: ["Patient"] },
+  { text: "Wallet", iconName: "AccountBalanceWallet", path: "/wallet", roles: ["Pharmacy", "Doctor"] },
   { text: "Orders", iconName: "ShoppingBag", path: "/orders", roles: ["Pharmacy"] },
   { text: "Patients", iconName: "Group", path: "/patients", roles: ["Doctor"] },
 ];

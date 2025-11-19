@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import doctorsData from "../../Data/Doctors.json";
 import {
   Box,
   Typography,
@@ -17,28 +16,18 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import { useNavigate, useSearchParams } from "react-router";
 import LoaderInPage from "../../components/Loader/LoaderInPage";
 import DoctorCard from "./DoctorCard";
+import { useDoctors } from "../../hooks/useData";
 
 const FindDoctor = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [doctors, setDoctors] = useState([]);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || "");
   const [specialtyFilter, setSpecialtyFilter] = useState(searchParams.get('specialty') || "All");
   const [governorateFilter, setGovernorateFilter] = useState(searchParams.get('governorate') || "All");
-  const [isLoading, setIsLoading] = useState(true);
-
-  // تحميل البيانات ومحاكاة التأخير
-  useEffect(() => {
-    const loadData = () => {
-      setTimeout(() => {
-        setDoctors(doctorsData);
-        setIsLoading(false); // تحميل البيانات
-      }, 1000);
-    };
-
-    loadData();
-  }, []);
+  
+  // Use dynamic data hook
+  const { doctors, isLoading } = useDoctors();
 
   // Extract governorate from location (assuming format like "City, Governorate" or just "Governorate")
   const getGovernorate = (location) => {
@@ -243,8 +232,8 @@ const FindDoctor = () => {
         ) : (
           <Grid container spacing={3} justifyContent="center">
             {filteredDoctors.length > 0 ? (
-              filteredDoctors.map((doctor) => (
-                <DoctorCard key={doctor.id} doctor={doctor} onClick={handleDoctorClick} />
+              filteredDoctors.map((doctor, index) => (
+                <DoctorCard key={doctor.id ? `${doctor.id}-${doctor.email || index}` : `doctor-${index}`} doctor={doctor} onClick={handleDoctorClick} />
               ))
             ) : (
               <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Box,
   Container,
@@ -33,11 +33,13 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { mockOrders } from "../../Data/OrdersData";
+import { useDataManager, useCurrentUser } from "../../hooks/useDataManager";
 
 const Orders = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const { currentUser } = useCurrentUser();
+  const { data: allOrders, updateItem } = useDataManager("Orders", []);
   const [statusFilter, setStatusFilter] = useState("All");
   const [dateFilter, setDateFilter] = useState("All Time");
   const [sortColumn, setSortColumn] = useState(null);
@@ -45,8 +47,31 @@ const Orders = () => {
   const [updateStatusAnchor, setUpdateStatusAnchor] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // Load orders from data file
-  const [orders] = useState(mockOrders);
+  // Filter orders for current pharmacy
+  const orders = useMemo(() => {
+    if (!currentUser || currentUser.role !== "Pharmacy") return [];
+    const pharmacyId = currentUser.email || currentUser.pharmacyProfile?.name;
+    return allOrders
+      .filter(
+        (order) =>
+          order.pharmacyId === pharmacyId ||
+          order.items?.some((item) => item.pharmacyId === pharmacyId || item.pharmacyName === pharmacyId)
+      )
+      .map((order) => ({
+        id: order.id,
+        patient: order.patientName || "Unknown Patient",
+        items: order.items || [],
+        totalPrice: order.total || 0,
+        status: order.status || "New",
+        date: order.date ? new Date(order.date).toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }) : "N/A",
+      }));
+  }, [allOrders, currentUser]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -113,10 +138,9 @@ const Orders = () => {
   };
 
   const handleStatusChange = (newStatus) => {
-    // Here you would update the order status in your data store
     if (selectedOrder) {
-      console.log(`Updating order ${selectedOrder.id} to ${newStatus}`);
-      // Update order status logic here
+      // Update order status in localStorage
+      updateItem(selectedOrder.id, { status: newStatus });
     }
     handleUpdateStatusClose();
   };

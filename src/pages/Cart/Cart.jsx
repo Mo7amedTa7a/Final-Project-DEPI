@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import {
   Box,
   Container,
@@ -18,16 +19,25 @@ import OrderTimeline from "../PharmacyProfile/OrderTimeline";
 
 const CartPage = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [cart, setCart] = useState([]);
 
   useEffect(() => {
+    // Check if user is logged in
+    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+    if (!currentUser || !currentUser.email) {
+      // User not logged in, redirect to login
+      navigate("/login", { replace: true });
+      return;
+    }
+
     // Load cart from localStorage
     const savedCart = localStorage.getItem("Cart");
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
       } catch (error) {
-        console.error("Error loading cart:", error);
+        // Error loading cart
       }
     }
 
@@ -38,7 +48,7 @@ const CartPage = () => {
         try {
           setCart(JSON.parse(updatedCart));
         } catch (error) {
-          console.error("Error loading cart:", error);
+          // Error loading cart
         }
       } else {
         setCart([]);
@@ -302,6 +312,7 @@ const CartPage = () => {
                 <Button
                   variant="contained"
                   fullWidth
+                  onClick={() => navigate("/checkout?type=products")}
                   sx={{
                     backgroundColor: theme.palette.primary.main,
                     py: 1.5,

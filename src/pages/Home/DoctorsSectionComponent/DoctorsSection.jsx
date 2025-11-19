@@ -1,15 +1,17 @@
-// Data
-import Data from "/src/Data/Doctors.json";
 // MUI Components
 import Grid from '@mui/material/Grid';
 import { Box, Typography, Card, CardContent, Avatar, Rating, useTheme } from "@mui/material";
 import { useNavigate } from "react-router";
 import doctorImage from "../../../assets/doctor.svg";
 import { useMemo } from "react";
+import { useDoctors } from "../../../hooks/useData";
 
 const DoctorsSection = ({ searchTerm, searchType, specialtyFilter, governorateFilter }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  
+  // Use dynamic data hook
+  const { doctors: allDoctors } = useDoctors();
 
   // Extract governorate from location
   const getGovernorate = (location) => {
@@ -20,7 +22,8 @@ const DoctorsSection = ({ searchTerm, searchType, specialtyFilter, governorateFi
 
   // Filter doctors
   const filteredDoctors = useMemo(() => {
-    let doctors = Data.filter(doctor => doctor.isTop);
+    // Show all registered doctors and top-rated doctors
+    let doctors = allDoctors.filter(doctor => doctor.isRegistered || doctor.isTop);
 
     // Filter by search type
     if (searchType === "Pharmacy") {
@@ -52,7 +55,7 @@ const DoctorsSection = ({ searchTerm, searchType, specialtyFilter, governorateFi
     }
 
     return doctors;
-  }, [searchTerm, searchType, specialtyFilter, governorateFilter]);
+  }, [allDoctors, searchTerm, searchType, specialtyFilter, governorateFilter]);
 
   const doctors = filteredDoctors;
 
@@ -90,8 +93,8 @@ const DoctorsSection = ({ searchTerm, searchType, specialtyFilter, governorateFi
 
         <Grid container spacing={3} justifyContent="center">
           {doctors.length > 0 ? (
-            doctors.map((doctor) => (
-            <Grid size={{ xs: 12, sm: 6 ,md:3}} key={doctor.id}>
+            doctors.map((doctor, index) => (
+            <Grid size={{ xs: 12, sm: 6 ,md:3}} key={doctor.id ? `${doctor.id}-${doctor.email || index}` : `doctor-${index}`}>
               <Card
                 sx={{
                   borderRadius: "16px",
@@ -116,7 +119,7 @@ const DoctorsSection = ({ searchTerm, searchType, specialtyFilter, governorateFi
                   }}
                 >
                   <Avatar
-                    src={doctorImage}
+                    src={doctor.image || doctorImage}
                     alt={doctor.name}
                     sx={{
                       width: 100,

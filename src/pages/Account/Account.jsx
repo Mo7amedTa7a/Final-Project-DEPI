@@ -426,13 +426,126 @@ const Account = () => {
                             display: "block",
                           }}
                         >
-                          Consultation Fee
+                          Video Call Price (USD)
                         </Typography>
                         <TextField
                           fullWidth
-                          value={`$${userData.doctorProfile.consultationFee || "Not set"}`}
-                          disabled
+                          type="number"
+                          value={userData.doctorProfile.videoCallPrice || ""}
+                          onChange={(e) => {
+                            const updatedUser = {
+                              ...userData,
+                              doctorProfile: {
+                                ...userData.doctorProfile,
+                                videoCallPrice: e.target.value,
+                              },
+                            };
+                            setUserData(updatedUser);
+                            localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
+                            const users = JSON.parse(localStorage.getItem("Users") || "[]");
+                            const updatedUsers = users.map((user) =>
+                              user.email === updatedUser.email ? updatedUser : user
+                            );
+                            localStorage.setItem("Users", JSON.stringify(updatedUsers));
+                          }}
                           variant="outlined"
+                          placeholder="Enter video call price"
+                          inputProps={{ min: 0 }}
+                          InputProps={{
+                            startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                          }}
+                          sx={{
+                            "& .MuiInputBase-input": {
+                              fontSize: { xs: "0.875rem", sm: "1rem" },
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid size={12}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "#555555",
+                            fontSize: "0.75rem",
+                            mb: 1,
+                            display: "block",
+                          }}
+                        >
+                          On-site Visit Price (USD)
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          value={userData.doctorProfile.onsitePrice || ""}
+                          onChange={(e) => {
+                            const updatedUser = {
+                              ...userData,
+                              doctorProfile: {
+                                ...userData.doctorProfile,
+                                onsitePrice: e.target.value,
+                              },
+                            };
+                            setUserData(updatedUser);
+                            localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
+                            const users = JSON.parse(localStorage.getItem("Users") || "[]");
+                            const updatedUsers = users.map((user) =>
+                              user.email === updatedUser.email ? updatedUser : user
+                            );
+                            localStorage.setItem("Users", JSON.stringify(updatedUsers));
+                          }}
+                          variant="outlined"
+                          placeholder="Enter on-site visit price"
+                          inputProps={{ min: 0 }}
+                          InputProps={{
+                            startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                          }}
+                          sx={{
+                            "& .MuiInputBase-input": {
+                              fontSize: { xs: "0.875rem", sm: "1rem" },
+                            },
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid size={12}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: "#555555",
+                            fontSize: "0.75rem",
+                            mb: 1,
+                            display: "block",
+                          }}
+                        >
+                          General Consultation Fee (USD) - Optional
+                        </Typography>
+                        <TextField
+                          fullWidth
+                          type="number"
+                          value={userData.doctorProfile.consultationFee || ""}
+                          onChange={(e) => {
+                            const updatedUser = {
+                              ...userData,
+                              doctorProfile: {
+                                ...userData.doctorProfile,
+                                consultationFee: e.target.value,
+                              },
+                            };
+                            setUserData(updatedUser);
+                            localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
+                            const users = JSON.parse(localStorage.getItem("Users") || "[]");
+                            const updatedUsers = users.map((user) =>
+                              user.email === updatedUser.email ? updatedUser : user
+                            );
+                            localStorage.setItem("Users", JSON.stringify(updatedUsers));
+                          }}
+                          variant="outlined"
+                          placeholder="Enter general consultation fee"
+                          inputProps={{ min: 0 }}
+                          InputProps={{
+                            startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                          }}
                           sx={{
                             "& .MuiInputBase-input": {
                               fontSize: { xs: "0.875rem", sm: "1rem" },

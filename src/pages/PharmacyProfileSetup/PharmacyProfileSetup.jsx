@@ -25,6 +25,7 @@ import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router";
+import FirestoreService from "../../services/FirestoreService";
 
 export default function PharmacyProfileSetup() {
   const navigate = useNavigate();
@@ -194,7 +195,7 @@ export default function PharmacyProfileSetup() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // التحقق من الحقول المطلوبة
@@ -211,14 +212,17 @@ export default function PharmacyProfileSetup() {
       return;
     }
 
-    // الحصول على بيانات المستخدم الحالي
-    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
-    const users = JSON.parse(localStorage.getItem("Users") || "[]");
+    try {
+      // الحصول على بيانات المستخدم الحالي
+      const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+      
+      if (!currentUser.email) {
+        setError("User not found. Please login again.");
+        return;
+      }
 
-    // إضافة بيانات الملف الشخصي للصيدلية
-    const updatedUser = {
-      ...currentUser,
-      pharmacyProfile: {
+      // إضافة بيانات الملف الشخصي للصيدلية
+      const pharmacyProfile = {
         profilePicture: formData.profilePicture,
         pharmacyName: formData.pharmacyName,
         shortName: formData.shortName,
@@ -229,18 +233,15 @@ export default function PharmacyProfileSetup() {
         hours: formData.hours,
         description: formData.description,
         products: formData.products || [],
-      },
-    };
+      };
 
-    try {
-      // تحديث المستخدم الحالي
+      // تحديث المستخدم في Firebase
+      const updatedUser = await FirestoreService.updateUser(currentUser.email, {
+        pharmacyProfile: pharmacyProfile,
+      });
+
+      // تحديث المستخدم الحالي في localStorage
       localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
-
-      // تحديث المستخدم في array المستخدمين
-      const updatedUsers = users.map((user) =>
-        user.email === updatedUser.email ? updatedUser : user
-      );
-      localStorage.setItem("Users", JSON.stringify(updatedUsers));
     } catch (error) {
       if (error.name === "QuotaExceededError") {
         setError("Storage limit exceeded. Please reduce the size of the image.");
@@ -256,7 +257,7 @@ export default function PharmacyProfileSetup() {
 
     // الانتقال للصفحة الرئيسية بعد الحفظ
     setTimeout(() => {
-      navigate("/");
+      navigate("/account");
       window.location.reload();
     }, 1500);
   };

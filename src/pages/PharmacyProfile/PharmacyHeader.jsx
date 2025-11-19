@@ -1,9 +1,10 @@
 import React from "react";
-import { Box, Typography, Button, Avatar, Card, CardContent, useTheme, Chip } from "@mui/material";
+import { Box, Typography, Button, Card, CardContent, useTheme, Chip } from "@mui/material";
 import {
   FavoriteBorder as FavoriteBorderIcon,
   Favorite as FavoriteIcon,
 } from "@mui/icons-material";
+import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
 import Rating from "@mui/material/Rating";
 
 const PharmacyHeader = ({ pharmacy, isFavorite, toggleFavorite }) => {
@@ -28,16 +29,28 @@ const PharmacyHeader = ({ pharmacy, isFavorite, toggleFavorite }) => {
             flexDirection: { xs: "column", md: "row" },
           }}
         >
-          <Avatar
-            src={pharmacy.image || pharmacy.profilePicture || "https://i.pravatar.cc/150"}
-            alt={pharmacy.name || pharmacy.pharmacyName}
+          {/* Pharmacy Icon - Same as Home page */}
+          <Box
             sx={{
               width: { xs: 100, sm: 120, md: 140 },
               height: { xs: 100, sm: 120, md: 140 },
+              borderRadius: "16px",
+              backgroundColor: theme.palette.primary.light,
               border: `4px solid ${theme.palette.primary.main}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
               boxShadow: `0 4px 15px ${theme.palette.primary.main}40`,
             }}
-          />
+          >
+            <LocalPharmacyIcon
+              sx={{
+                color: theme.palette.primary.contrastText || theme.palette.primary.main,
+                fontSize: { xs: 50, sm: 60, md: 70 },
+              }}
+            />
+          </Box>
           <Box sx={{ flex: 1, textAlign: { xs: "center", md: "start" } }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, justifyContent: { xs: "center", md: "flex-start" } }}>
               <Typography

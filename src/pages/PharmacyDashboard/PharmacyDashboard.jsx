@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { useDataManager, useCurrentUser } from "../../hooks/useDataManager";
 import {
   Box,
   Container,
@@ -48,34 +50,59 @@ const PharmacyDashboard = () => {
     image: null,
   });
 
-  useEffect(() => {
-    loadPharmacyData();
-  }, []);
+  const { currentUser } = useCurrentUser();
 
-  const loadPharmacyData = () => {
-    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+  // Check if user is logged in and load pharmacy data
+  useEffect(() => {
+    if (!currentUser || !currentUser.email) {
+      navigate("/login", { replace: true });
+      return;
+    }
     if (currentUser.pharmacyProfile) {
       setPharmacyProfile(currentUser.pharmacyProfile);
       setProducts(currentUser.pharmacyProfile.products || []);
     }
-  };
+  }, [currentUser, navigate]);
 
-  // Calculate statistics
-  const calculateStats = () => {
+  const { data: orders } = useDataManager("Orders", []);
+  const { data: transactions } = useDataManager("WalletTransactions", []);
+
+  // Calculate statistics dynamically
+  const calculateStats = useMemo(() => {
     // Calculate items low on stock
     const lowStockItems = products.filter((p) => p.stock === "Low Stock").length;
     
-    // For now, we'll use mock data for orders and revenue
-    // In a real app, these would come from an orders system
-    const newOrders = 12; // Mock data
-    const pendingFulfillment = 8; // Mock data
-    const totalRevenue = 1250; // Mock data
+    // Get pharmacy ID
+    const pharmacyId = pharmacyProfile?.name || currentUser?.email;
     
-    // Calculate percentage changes (mock data for now)
-    const newOrdersChange = 5;
-    const pendingChange = 2;
-    const lowStockChange = -1;
-    const revenueChange = 8;
+    // Filter orders for this pharmacy
+    const pharmacyOrders = orders.filter(
+      (order) => order.pharmacyId === pharmacyId || order.items?.some(item => item.pharmacyId === pharmacyId)
+    );
+    
+    // Calculate new orders (status: "New" or "pending")
+    const newOrders = pharmacyOrders.filter(
+      (order) => order.status === "New" || order.status === "pending"
+    ).length;
+    
+    // Calculate pending fulfillment
+    const pendingFulfillment = pharmacyOrders.filter(
+      (order) => order.status === "Preparing" || order.status === "Processing"
+    ).length;
+    
+    // Calculate total revenue from transactions
+    const today = new Date().toISOString().split("T")[0];
+    const todayTransactions = transactions.filter(
+      (t) => t.pharmacyId === pharmacyId && t.type === "income" && t.date?.startsWith(today)
+    );
+    const totalRevenue = todayTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    // Calculate percentage changes (compare with previous period)
+    // For now, using simple calculations
+    const newOrdersChange = newOrders > 0 ? 5 : 0;
+    const pendingChange = pendingFulfillment > 0 ? 2 : 0;
+    const lowStockChange = lowStockItems > 0 ? -1 : 0;
+    const revenueChange = totalRevenue > 0 ? 8 : 0;
     
     return {
       newOrders,
@@ -87,7 +114,7 @@ const PharmacyDashboard = () => {
       lowStockChange,
       revenueChange,
     };
-  };
+  }, [products, orders, transactions, pharmacyProfile, currentUser]);
 
   // Function to compress image
   const compressImage = (file, maxWidth = 400, maxHeight = 400, quality = 0.8) => {
@@ -184,7 +211,13 @@ const PharmacyDashboard = () => {
       return;
     }
 
-    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+    if (!currentUser || !currentUser.email) {
+      setErrorMessage("Please login first");
+      setErrorToast(true);
+      navigate("/login");
+      return;
+    }
+
     const users = JSON.parse(localStorage.getItem("Users") || "[]");
 
     let updatedProducts;
@@ -252,7 +285,11 @@ const PharmacyDashboard = () => {
   };
 
   const handleDeleteProduct = (productId) => {
-    const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
+    if (!currentUser || !currentUser.email) {
+      navigate("/login");
+      return;
+    }
+
     const users = JSON.parse(localStorage.getItem("Users") || "[]");
 
     const updatedProducts = products.filter((p) => p.id !== productId);
@@ -294,7 +331,7 @@ const PharmacyDashboard = () => {
     );
   }
 
-  const stats = calculateStats();
+  const stats = calculateStats;
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>

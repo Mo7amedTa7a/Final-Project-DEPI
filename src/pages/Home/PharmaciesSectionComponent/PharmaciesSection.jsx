@@ -1,4 +1,3 @@
-import Data from "../../../Data/Pharmacies.json";
 // components mui
 import {
   Box,
@@ -11,11 +10,15 @@ import {
 import Grid from '@mui/material/Grid';
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
 import { useNavigate } from "react-router";
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
+import { usePharmacies } from "../../../hooks/useData";
 
 const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
   const theme = useTheme();
   const navigate = useNavigate();
+  
+  // Use dynamic data hook
+  const { pharmacies: allPharmacies } = usePharmacies();
 
   // Extract governorate from location
   const getGovernorate = (location) => {
@@ -24,28 +27,10 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
     return parts.length > 1 ? parts[parts.length - 1] : parts[0];
   };
 
-  // Load registered pharmacies
-  useEffect(() => {
-    // This will be handled by the parent component if needed
-  }, []);
-
   // Filter pharmacies
   const filteredPharmacies = useMemo(() => {
-    // Load registered pharmacies from localStorage
-    const users = JSON.parse(localStorage.getItem("Users") || "[]");
-    const registeredPharmacies = users
-      .filter((user) => user.role === "Pharmacy" && user.pharmacyProfile)
-      .map((user) => ({
-        id: user.email,
-        name: user.pharmacyProfile.pharmacyName,
-        location: user.pharmacyProfile.location,
-        rating: 4.5,
-        reviews: 0,
-        isTopRated: true,
-        isRegistered: true,
-      }));
-
-    let pharmacies = [...registeredPharmacies, ...Data].filter((pharmacy) => pharmacy.isTopRated);
+    // Show all registered pharmacies and top-rated pharmacies
+    let pharmacies = allPharmacies.filter((pharmacy) => pharmacy.isRegistered || pharmacy.isTopRated);
 
     // Filter by search type
     if (searchType === "Doctor") {
@@ -70,7 +55,7 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
     }
 
     return pharmacies;
-  }, [searchTerm, searchType, governorateFilter]);
+  }, [allPharmacies, searchTerm, searchType, governorateFilter]);
 
   const pharmacies = filteredPharmacies;
 
