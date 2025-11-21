@@ -41,8 +41,6 @@ const Prescriptions = () => {
       return;
     }
 
-    // Debug: Log patient info
-    console.log("Loading prescriptions for:", { patientId, patientName, userEmail: user.email });
 
     // Subscribe to real-time updates from Firebase
     // Note: We don't use where/orderBy in subscription to avoid index requirements
@@ -76,21 +74,6 @@ const Prescriptions = () => {
           );
           
           return matches;
-        });
-
-        // Debug: Log filtered results
-        console.log("Prescriptions loaded:", {
-          totalFromFirebase: firestorePrescriptions.length,
-          totalFromLocal: localPrescriptions.length,
-          totalCombined: allPrescriptions.length,
-          filteredForPatient: patientPrescriptions.length,
-          patientId,
-          patientName,
-          samplePrescription: allPrescriptions[0] ? {
-            id: allPrescriptions[0].id,
-            patientId: allPrescriptions[0].patientId,
-            patientName: allPrescriptions[0].patientName
-          } : null
         });
 
         // Sort by date (newest first) on client side

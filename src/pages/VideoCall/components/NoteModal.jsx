@@ -55,6 +55,7 @@ const NoteModal = ({ open, onClose, patientData, onSendNote }) => {
       onClose={handleClose}
       maxWidth="sm"
       fullWidth
+      disableScrollLock
       PaperProps={{
         sx: {
           borderRadius: 3,

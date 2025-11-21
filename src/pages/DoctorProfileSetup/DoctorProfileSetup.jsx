@@ -467,6 +467,7 @@ export default function DoctorProfileSetup() {
                 value={formData.specialty}
                 onChange={handleChange}
                 label="Specialty"
+                MenuProps={{ disableScrollLock: true }}
               >
                 <MenuItem value="Cardiologist">Cardiologist</MenuItem>
                 <MenuItem value="Dermatologist">Dermatologist</MenuItem>

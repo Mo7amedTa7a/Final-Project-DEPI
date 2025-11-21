@@ -29,7 +29,7 @@ const PharmacyHeader = ({ pharmacy, isFavorite, toggleFavorite }) => {
             flexDirection: { xs: "column", md: "row" },
           }}
         >
-          {/* Pharmacy Icon - Same as Home page */}
+          {/* Pharmacy Icon/Image */}
           <Box
             sx={{
               width: { xs: 100, sm: 120, md: 140 },
@@ -42,14 +42,28 @@ const PharmacyHeader = ({ pharmacy, isFavorite, toggleFavorite }) => {
               justifyContent: "center",
               flexShrink: 0,
               boxShadow: `0 4px 15px ${theme.palette.primary.main}40`,
+              overflow: "hidden",
             }}
           >
-            <LocalPharmacyIcon
-              sx={{
-                color: theme.palette.primary.contrastText || theme.palette.primary.main,
-                fontSize: { xs: 50, sm: 60, md: 70 },
-              }}
-            />
+            {pharmacy.image ? (
+              <Box
+                component="img"
+                src={pharmacy.image}
+                alt={pharmacy.name || pharmacy.pharmacyName}
+                sx={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+            ) : (
+              <LocalPharmacyIcon
+                sx={{
+                  color: theme.palette.primary.contrastText || theme.palette.primary.main,
+                  fontSize: { xs: 50, sm: 60, md: 70 },
+                }}
+              />
+            )}
           </Box>
           <Box sx={{ flex: 1, textAlign: { xs: "center", md: "start" } }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, justifyContent: { xs: "center", md: "flex-start" } }}>

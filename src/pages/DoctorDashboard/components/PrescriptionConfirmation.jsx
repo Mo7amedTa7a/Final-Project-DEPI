@@ -34,6 +34,7 @@ const PrescriptionConfirmation = ({ open, onClose, prescriptionData, onReturnToD
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      disableScrollLock
       disableEscapeKeyDown={false}
       PaperProps={{
         sx: {

@@ -11,7 +11,6 @@ const PatientDashboardLazy = React.lazy(() => import('../pages/PatientDashboard/
 const PharmacyDashboardLazy = React.lazy(() => import('../pages/PharmacyDashboard/PharmacyDashboard'));
 const DoctorDashboardLazy = React.lazy(() => import('../pages/DoctorDashboard/DoctorDashboard'));
 const PatientsLazy = React.lazy(() => import('../pages/Patients/Patients'));
-const MessagesLazy = React.lazy(() => import('../pages/Messages/Messages'));
 const PrescriptionsLazy = React.lazy(() => import('../pages/Prescriptions/Prescriptions'));
 const CheckoutLazy = React.lazy(() => import('../pages/Checkout/Checkout'));
 const WalletLazy = React.lazy(() => import('../pages/Wallet/Wallet'));
@@ -28,6 +27,8 @@ const AccountLazy = React.lazy(() => import('../pages/Account/Account'));
 const CartLazy = React.lazy(() => import('../pages/Cart/Cart'));
 const OrdersLazy = React.lazy(() => import('../pages/Orders/Orders'));
 const VideoCallLazy = React.lazy(() => import('../pages/VideoCall/VideoCall'));
+const NotificationsLazy = React.lazy(() => import('../pages/Notifications/Notifications'));
+const NotFoundLazy = React.lazy(() => import('../pages/NotFound/NotFound'));
 
 
 export const Routes = createBrowserRouter([
@@ -147,21 +148,21 @@ export const Routes = createBrowserRouter([
               ),
             },
             {
-              path: "patients",
+              path: "notifications",
               Component: () => (
-                <ProtectedRoute requiredRole="Doctor">
+                <ProtectedRoute>
                   <Suspense fallback={<Loader />}>
-                    <PatientsLazy />
+                    <NotificationsLazy />
                   </Suspense>
                 </ProtectedRoute>
               ),
             },
             {
-              path: "messages",
+              path: "patients",
               Component: () => (
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="Doctor">
                   <Suspense fallback={<Loader />}>
-                    <MessagesLazy />
+                    <PatientsLazy />
                   </Suspense>
                 </ProtectedRoute>
               ),
@@ -194,6 +195,14 @@ export const Routes = createBrowserRouter([
                     <WalletLazy />
                   </Suspense>
                 </ProtectedRoute>
+              ),
+            },
+            {
+              path: "*",
+              Component: () => (
+                <Suspense fallback={<Loader />}>
+                  <NotFoundLazy />
+                </Suspense>
               ),
             },
     ],

@@ -183,6 +183,7 @@ const FindDoctor = () => {
               value={specialtyFilter}
               label="Specialty"
               onChange={(e) => handleSpecialtyChange(e.target.value)}
+              MenuProps={{ disableScrollLock: true }}
               startAdornment={
                 <InputAdornment position="start" sx={{ ml: 1 }}>
                   <FilterListIcon sx={{ color: "text.secondary", fontSize: 20 }} />
@@ -212,6 +213,7 @@ const FindDoctor = () => {
               value={governorateFilter}
               label="Governorate"
               onChange={(e) => handleGovernorateChange(e.target.value)}
+              MenuProps={{ disableScrollLock: true }}
               sx={{
                 borderRadius: 2,
               }}

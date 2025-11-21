@@ -154,6 +154,37 @@ const PrescriptionModal = ({ open, onClose, patientData }) => {
       allPrescriptions.push(prescriptionWithId);
       localStorage.setItem("Prescriptions", JSON.stringify(allPrescriptions));
       
+      // Create notification for patient
+      const patientNotification = {
+        type: "prescription",
+        title: "New Prescription Received",
+        message: `${currentUser?.doctorProfile?.fullName || "Dr. Unknown"} has issued a new prescription for ${prescription.medication}`,
+        patientId: patientId.trim().toLowerCase(),
+        prescriptionId: prescriptionWithId.id,
+        read: false,
+      };
+      
+      // Save notification to Firebase
+      try {
+        await FirestoreService.addNotification(patientNotification);
+      } catch (notifError) {
+        console.error("Error sending notification to patient:", notifError);
+      }
+      
+      // Also save to localStorage for backward compatibility
+      try {
+        const notifications = JSON.parse(localStorage.getItem("Notifications") || "[]");
+        notifications.push({ 
+          ...patientNotification, 
+          id: Date.now() + Math.random(), 
+          date: new Date().toISOString() 
+        });
+        localStorage.setItem("Notifications", JSON.stringify(notifications));
+        window.dispatchEvent(new Event("storage"));
+      } catch (notifError) {
+        console.error("Error saving notification to localStorage:", notifError);
+      }
+      
       // Dispatch custom event to notify other tabs/components
       window.dispatchEvent(new Event("storage"));
       window.dispatchEvent(new CustomEvent("prescriptionAdded", { detail: prescriptionWithId }));
@@ -168,6 +199,30 @@ const PrescriptionModal = ({ open, onClose, patientData }) => {
       };
       allPrescriptions.push(prescriptionWithId);
       localStorage.setItem("Prescriptions", JSON.stringify(allPrescriptions));
+      
+      // Create notification for patient (even if Firebase failed)
+      const patientNotification = {
+        type: "prescription",
+        title: "New Prescription Received",
+        message: `${currentUser?.doctorProfile?.fullName || "Dr. Unknown"} has issued a new prescription for ${prescription.medication}`,
+        patientId: patientId.trim().toLowerCase(),
+        prescriptionId: prescriptionWithId.id,
+        read: false,
+      };
+      
+      // Save notification to localStorage
+      try {
+        const notifications = JSON.parse(localStorage.getItem("Notifications") || "[]");
+        notifications.push({ 
+          ...patientNotification, 
+          id: Date.now() + Math.random(), 
+          date: new Date().toISOString() 
+        });
+        localStorage.setItem("Notifications", JSON.stringify(notifications));
+        window.dispatchEvent(new Event("storage"));
+      } catch (notifError) {
+        console.error("Error saving notification to localStorage:", notifError);
+      }
       
       // Dispatch custom event
       window.dispatchEvent(new Event("storage"));
@@ -203,6 +258,7 @@ const PrescriptionModal = ({ open, onClose, patientData }) => {
       onClose={handleClose}
       maxWidth="md"
       fullWidth
+      disableScrollLock
       PaperProps={{
         sx: {
           borderRadius: 3,
@@ -361,6 +417,7 @@ const PrescriptionModal = ({ open, onClose, patientData }) => {
                   <Select
                     value={formData.dosageUnit}
                     onChange={(e) => handleChange("dosageUnit", e.target.value)}
+                    MenuProps={{ disableScrollLock: true }}
                   >
                     {dosageUnits.map((unit) => (
                       <MenuItem key={unit} value={unit}>
@@ -387,6 +444,7 @@ const PrescriptionModal = ({ open, onClose, patientData }) => {
                 <Select
                   value={formData.frequency}
                   onChange={(e) => handleChange("frequency", e.target.value)}
+                  MenuProps={{ disableScrollLock: true }}
                 >
                   {frequencyOptions.map((freq) => (
                     <MenuItem key={freq} value={freq}>
@@ -422,6 +480,7 @@ const PrescriptionModal = ({ open, onClose, patientData }) => {
                 <Select
                   value={formData.durationUnit}
                   onChange={(e) => handleChange("durationUnit", e.target.value)}
+                  MenuProps={{ disableScrollLock: true }}
                 >
                   {durationUnits.map((unit) => (
                     <MenuItem key={unit} value={unit}>

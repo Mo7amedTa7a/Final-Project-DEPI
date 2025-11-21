@@ -178,6 +178,7 @@ const HeroSection = ({
                             <FilterListIcon sx={{ color: "text.secondary", fontSize: 20 }} />
                           </InputAdornment>
                         }
+                        MenuProps={{ disableScrollLock: true }}
                         sx={{ borderRadius: 2 }}
                       >
                         <MenuItem value="All">All</MenuItem>
@@ -216,6 +217,7 @@ const HeroSection = ({
                           value={specialtyFilter}
                           label="Specialty"
                           onChange={(e) => setSpecialtyFilter(e.target.value)}
+                          MenuProps={{ disableScrollLock: true }}
                           sx={{ borderRadius: 2 }}
                         >
                           <MenuItem value="All">All Specialties</MenuItem>
@@ -235,6 +237,7 @@ const HeroSection = ({
                         value={governorateFilter}
                         label="Governorate"
                         onChange={(e) => setGovernorateFilter(e.target.value)}
+                        MenuProps={{ disableScrollLock: true }}
                         sx={{ borderRadius: 2 }}
                       >
                         <MenuItem value="All">All Governorates</MenuItem>

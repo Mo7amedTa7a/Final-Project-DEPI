@@ -54,7 +54,25 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
       });
     }
 
-    return pharmacies;
+    // Sort by rating (highest first) and limit to top 10 for top-rated section
+    const sortedPharmacies = [...pharmacies].sort((a, b) => {
+      const ratingA = a.rating || 0;
+      const ratingB = b.rating || 0;
+      if (ratingB !== ratingA) {
+        return ratingB - ratingA; // Higher rating first
+      }
+      // If same rating, sort by number of reviews
+      const reviewsA = Array.isArray(a.reviews) ? a.reviews.length : 0;
+      const reviewsB = Array.isArray(b.reviews) ? b.reviews.length : 0;
+      return reviewsB - reviewsA;
+    });
+
+    // If showing top-rated only, limit to top 10
+    if (!searchTerm && governorateFilter === "All" && searchType === "All") {
+      return sortedPharmacies.slice(0, 10);
+    }
+
+    return sortedPharmacies;
   }, [allPharmacies, searchTerm, searchType, governorateFilter]);
 
   const pharmacies = filteredPharmacies;
@@ -116,7 +134,7 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
                     gap: 2,
                   }}
                 >
-                  {/* Pharmacy Icon */}
+                  {/* Pharmacy Icon/Image */}
                   <Box
                     sx={{
                       width: 60,
@@ -128,14 +146,28 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
+                      overflow: "hidden",
                     }}
                   >
-                    <LocalPharmacyIcon
-                      sx={{
-                        color: theme.palette.primary.contrastText,
-                        fontSize: 32,
-                      }}
-                    />
+                    {pharmacy.image ? (
+                      <Box
+                        component="img"
+                        src={pharmacy.image}
+                        alt={pharmacy.name}
+                        sx={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <LocalPharmacyIcon
+                        sx={{
+                          color: theme.palette.primary.contrastText,
+                          fontSize: 32,
+                        }}
+                      />
+                    )}
                   </Box>
 
                   {/* Pharmacy Info */}
@@ -205,7 +237,7 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
                             ml: 0.5,
                           }}
                         >
-                          ({pharmacy.reviews} reviews)
+                          ({Array.isArray(pharmacy.reviews) ? pharmacy.reviews.length : pharmacy.reviews || 0} reviews)
                         </Typography>
                       </Box>
                     </Box>

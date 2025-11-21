@@ -25,7 +25,6 @@ class DataService {
       "Notifications": "notifications",
       "WalletTransactions": "walletTransactions",
       "Prescriptions": "prescriptions",
-      "Messages": "messages",
       "Users": "users",
     };
 
@@ -55,7 +54,6 @@ class DataService {
         "Notifications": "notifications",
         "WalletTransactions": "walletTransactions",
         "Prescriptions": "prescriptions",
-        "Messages": "messages",
         "Users": "users",
       };
 
@@ -81,7 +79,6 @@ class DataService {
           "Notifications": "notifications",
           "WalletTransactions": "walletTransactions",
           "Prescriptions": "prescriptions",
-          "Messages": "messages",
           "Users": "users",
         };
 
@@ -108,7 +105,6 @@ class DataService {
         "Notifications": "notifications",
         "WalletTransactions": "walletTransactions",
         "Prescriptions": "prescriptions",
-        "Messages": "messages",
         "Users": "users",
       };
 
@@ -308,33 +304,6 @@ class DataService {
     }
   }
 
-  // Messages methods (async wrappers)
-  async getMessages(filters = {}) {
-    try {
-      return await this.firestoreService.getMessages(filters);
-    } catch (error) {
-      console.error("Error getting messages:", error);
-      return [];
-    }
-  }
-
-  async addMessage(message) {
-    try {
-      return await this.firestoreService.addMessage(message);
-    } catch (error) {
-      console.error("Error adding message:", error);
-      throw error;
-    }
-  }
-
-  async markMessageAsRead(id) {
-    try {
-      return await this.firestoreService.markMessageAsRead(id);
-    } catch (error) {
-      console.error("Error marking message as read:", error);
-      return false;
-    }
-  }
 }
 
 // Export singleton instance

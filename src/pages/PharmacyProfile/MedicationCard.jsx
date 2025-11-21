@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import {
   Card,
   Box,
@@ -11,7 +11,7 @@ import {
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 const MedicationCard = ({ medication, handleAddToCart }) => {
-    const theme = useTheme();
+  const theme = useTheme();
 
   return (
     <Card
@@ -37,7 +37,7 @@ const MedicationCard = ({ medication, handleAddToCart }) => {
           backgroundColor: theme.palette.grey[200],
         }}
         onError={(e) => {
-          e.target.src = "https://placehold.co/600x400"; // استخدام الرابط الصحيح
+          e.target.src = "https://placehold.co/600x400";
         }}
       />
       <CardContent>
@@ -85,4 +85,18 @@ const MedicationCard = ({ medication, handleAddToCart }) => {
   );
 };
 
-export default MedicationCard;
+MedicationCard.displayName = "MedicationCard";
+
+// Custom comparison function for memo
+const areEqual = (prevProps, nextProps) => {
+  // Compare medication by ID only (most stable)
+  const medicationEqual = 
+    prevProps.medication?.id === nextProps.medication?.id;
+  
+  // Compare handler function reference
+  const handlerEqual = prevProps.handleAddToCart === nextProps.handleAddToCart;
+  
+  return medicationEqual && handlerEqual;
+};
+
+export default memo(MedicationCard, areEqual);

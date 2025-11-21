@@ -192,6 +192,7 @@ export default function PatientProfileSetup() {
                 value={formData.gender}
                 onChange={handleChange}
                 label="Gender"
+                MenuProps={{ disableScrollLock: true }}
               >
                 <MenuItem value="Male">Male</MenuItem>
                 <MenuItem value="Female">Female</MenuItem>

@@ -44,15 +44,27 @@ const PatientQueueView = ({ patientId, doctorId }) => {
   const { data: localStorageAppointments } = useDataManager("Appointments", []);
 
   // Combine Firebase and localStorage appointments and normalize them
+  // IMPORTANT: Always use the most recent version of each appointment
   const allAppointments = useMemo(() => {
     const combined = [...(firebaseAppointments || []), ...(localStorageAppointments || [])];
-    // Remove duplicates and normalize old appointments
+    // Remove duplicates - prefer Firebase version if exists, otherwise use localStorage
     const unique = new Map();
     combined.forEach((apt) => {
       const key = apt.id || `${apt.doctorId}-${apt.patientId}-${apt.date}-${apt.time}`;
       if (!unique.has(key)) {
         const normalized = normalizeAppointment(apt);
         unique.set(key, normalized);
+      } else {
+        // If duplicate exists, prefer the one with more recent bookingTime or dateCreated
+        const existing = unique.get(key);
+        const existingTime = existing.bookingTime ? new Date(existing.bookingTime).getTime() : 0;
+        const newTime = apt.bookingTime ? new Date(apt.bookingTime).getTime() : 0;
+        
+        // If new appointment has more recent booking time, replace
+        if (newTime > existingTime) {
+          const normalized = normalizeAppointment(apt);
+          unique.set(key, normalized);
+        }
       }
     });
     return Array.from(unique.values());
@@ -68,9 +80,16 @@ const PatientQueueView = ({ patientId, doctorId }) => {
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split("T")[0];
     
+    // Normalize all appointments first, then filter
+    const normalizedAppointments = allAppointments.map(apt => normalizeAppointment(apt));
+    
     // Get all appointments from today onwards for this doctor
-    const todayAppointments = allAppointments.filter((apt) => {
+    // EXCLUDE completed appointments from queue calculation
+    const todayAppointments = normalizedAppointments.filter((apt) => {
       if (!apt.date) return false;
+      
+      // Exclude completed appointments
+      if (apt.queueStatus === "completed") return false;
       
       // Handle different date formats
       let aptDateStr = '';
@@ -113,6 +132,11 @@ const PatientQueueView = ({ patientId, doctorId }) => {
 
     // Calculate queue position
     const queueStatus = patientAppointment.queueStatus || "waiting";
+    
+    // Don't show queue tracker for completed appointments (double check)
+    if (queueStatus === "completed") {
+      return null;
+    }
     let queuePosition = 0;
     let patientsAhead = 0;
 

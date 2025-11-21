@@ -19,6 +19,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Person as PersonIcon,
   LocalPharmacy as LocalPharmacyIcon,
+  Videocam as VideocamIcon,
 } from "@mui/icons-material";
 import FirestoreService from "../../../services/FirestoreService";
 import userImage from "../../../assets/user.svg";
@@ -394,6 +395,120 @@ const LiveQueueTracker = ({ doctorId }) => {
     }
   };
 
+  // Generate Jitsi Meet link
+  const generateMeetingLink = (appointmentId) => {
+    // Create a unique room name based on appointment ID
+    const roomName = `appointment-${appointmentId}-${Date.now()}`;
+    // Use Jitsi Meet public server
+    return `https://meet.jit.si/${roomName}`;
+  };
+
+  // Handle starting video meeting
+  const handleStartMeeting = async (appointmentId) => {
+    if (!appointmentId) {
+      setError("لا يوجد موعد محدد");
+      return;
+    }
+
+    setIsUpdating(true);
+    setError(null);
+
+    try {
+      // Generate meeting link
+      const meetingLink = generateMeetingLink(appointmentId);
+
+      // Get the appointment to find Firebase document ID
+      const appointment = queueData.inProgress;
+      
+      // Try to find Firebase document ID
+      // First, try to find in Firebase appointments
+      let firebaseDocId = appointmentId;
+      if (firebaseAppointments && firebaseAppointments.length > 0) {
+        const firebaseApt = firebaseAppointments.find(apt => 
+          apt.id === appointmentId || 
+          (apt.doctorId === appointment.doctorId && 
+           apt.patientId === appointment.patientId && 
+           apt.date === appointment.date && 
+           apt.time === appointment.time)
+        );
+        if (firebaseApt && firebaseApt.id) {
+          firebaseDocId = firebaseApt.id;
+        }
+      }
+
+      // Update appointment with meeting status and link in Firebase
+      try {
+        await FirestoreService.updateAppointment(firebaseDocId, {
+          meetingStatus: "started",
+          meetingLink: meetingLink,
+          meetingStartedAt: new Date().toISOString(),
+        });
+      } catch (updateError) {
+        // If update fails, try with original appointmentId
+        if (updateError.message && updateError.message.includes("does not exist")) {
+          console.warn("Failed to update with Firebase ID, trying with appointmentId:", appointmentId);
+          await FirestoreService.updateAppointment(appointmentId, {
+            meetingStatus: "started",
+            meetingLink: meetingLink,
+            meetingStartedAt: new Date().toISOString(),
+          });
+        } else {
+          throw updateError;
+        }
+      }
+
+      // Also update localStorage for immediate update
+      const localAppointments = JSON.parse(
+        localStorage.getItem("Appointments") || "[]"
+      );
+      const localIndex = localAppointments.findIndex(
+        (apt) => apt.id === appointmentId || 
+                (apt.doctorId === appointment.doctorId && 
+                 apt.patientId === appointment.patientId && 
+                 apt.date === appointment.date && 
+                 apt.time === appointment.time)
+      );
+      if (localIndex !== -1) {
+        localAppointments[localIndex].meetingStatus = "started";
+        localAppointments[localIndex].meetingLink = meetingLink;
+        localAppointments[localIndex].meetingStartedAt = new Date().toISOString();
+        localStorage.setItem("Appointments", JSON.stringify(localAppointments));
+        window.dispatchEvent(new Event("storage"));
+      }
+
+      // Create notification for patient
+      const patientNotification = {
+        type: "meeting",
+        title: "الميتنج جاهز",
+        message: `الدكتور ${appointment.doctorName} بدأ الميتنج. يمكنك الانضمام الآن.`,
+        patientId: appointment.patientId,
+        appointmentId: appointmentId,
+        meetingLink: meetingLink,
+        read: false,
+      };
+
+      // Save notification to Firebase
+      await FirestoreService.addNotification(patientNotification);
+
+      // Also save to localStorage
+      const notifications = JSON.parse(localStorage.getItem("Notifications") || "[]");
+      notifications.push({
+        ...patientNotification,
+        id: Date.now() + Math.random(),
+        date: new Date().toISOString(),
+      });
+      localStorage.setItem("Notifications", JSON.stringify(notifications));
+      window.dispatchEvent(new CustomEvent("notificationAdded", { detail: patientNotification }));
+
+      // Open meeting in new tab
+      window.open(meetingLink, "_blank");
+    } catch (err) {
+      setError("حدث خطأ أثناء بدء الميتنج");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <>
     <Card
@@ -484,7 +599,34 @@ const LiveQueueTracker = ({ doctorId }) => {
                       </Typography>
                     )}
                   </Box>
-                  <Box sx={{ display: "flex", gap: 1.5 }}>
+                  <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+                    {/* Start Meeting Button - Only for video appointments */}
+                    {queueData.inProgress.appointmentType === "video" && (
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        startIcon={<VideocamIcon />}
+                        onClick={() => handleStartMeeting(queueData.inProgress.id)}
+                        disabled={isUpdating || queueData.inProgress.meetingStatus === "started"}
+                        sx={{
+                          textTransform: "none",
+                          fontWeight: 600,
+                          px: 2.5,
+                          backgroundColor: queueData.inProgress.meetingStatus === "started" 
+                            ? "#4CAF50" 
+                            : "#9C27B0",
+                          "&:hover": {
+                            backgroundColor: queueData.inProgress.meetingStatus === "started"
+                              ? "#45A049"
+                              : "#7B1FA2",
+                          },
+                        }}
+                      >
+                        {queueData.inProgress.meetingStatus === "started" 
+                          ? "الميتنج مفتوح" 
+                          : "بدء الميتنج"}
+                      </Button>
+                    )}
                     <Button
                       variant="contained"
                       color="primary"

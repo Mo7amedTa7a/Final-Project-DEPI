@@ -786,6 +786,7 @@ const DoctorProfile = () => {
                           value={selectedClinic}
                           onChange={(e) => setSelectedClinic(e.target.value)}
                           label="Select Clinic"
+                          MenuProps={{ disableScrollLock: true }}
                         >
                           {clinics.map((clinic) => (
                             <MenuItem key={clinic.id} value={clinic.id.toString()}>

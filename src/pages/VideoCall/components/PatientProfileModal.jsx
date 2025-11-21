@@ -54,6 +54,7 @@ const PatientProfileModal = ({ open, onClose, patientData }) => {
       onClose={onClose}
       maxWidth="md"
       fullWidth
+      disableScrollLock
       PaperProps={{
         sx: {
           borderRadius: 3,

@@ -89,7 +89,8 @@ class FirestoreService {
         (snapshot) => {
           const data = [];
           snapshot.forEach((doc) => {
-            data.push({ id: doc.id, ...this.convertNestedTimestamps(doc.data()) });
+            // Put id after spread to ensure doc.id (document ID) takes precedence over any id in data
+            data.push({ ...this.convertNestedTimestamps(doc.data()), id: doc.id });
           });
           callback(data);
         },
@@ -141,7 +142,8 @@ class FirestoreService {
       const querySnapshot = await getDocs(q);
       const data = [];
       querySnapshot.forEach((doc) => {
-        data.push({ id: doc.id, ...this.convertNestedTimestamps(doc.data()) });
+        // Put id after spread to ensure doc.id (document ID) takes precedence over any id in data
+        data.push({ ...this.convertNestedTimestamps(doc.data()), id: doc.id });
       });
       return data;
     } catch (error) {
@@ -153,12 +155,21 @@ class FirestoreService {
   // Generic set method (async) - adds a new document
   async add(collectionName, data) {
     try {
+      // Remove id from data before saving to Firebase (Firebase will generate its own document ID)
+      const { id, ...dataWithoutId } = data;
+      
+      // Remove undefined values to avoid Firebase errors
+      const cleanData = Object.fromEntries(
+        Object.entries(dataWithoutId).filter(([_, value]) => value !== undefined)
+      );
+      
       const docRef = await addDoc(collection(db, collectionName), {
-        ...data,
+        ...cleanData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      return { id: docRef.id, ...data };
+      // Return with Firebase document ID (not the id from data)
+      return { ...cleanData, id: docRef.id };
     } catch (error) {
       console.error(`Error adding to ${collectionName}:`, error);
       throw error;
@@ -168,14 +179,43 @@ class FirestoreService {
   // Generic update method (async)
   async update(collectionName, docId, updates) {
     try {
-      const docRef = doc(db, collectionName, docId);
+      // Ensure collectionName and docId are strings
+      const collectionNameStr = String(collectionName);
+      const docIdStr = String(docId);
+      
+      if (!collectionNameStr || !docIdStr) {
+        throw new Error("Collection name and document ID must be valid strings");
+      }
+      
+      // Check if document exists first
+      const docRef = doc(db, collectionNameStr, docIdStr);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        console.error(`Document ${collectionNameStr}/${docIdStr} does not exist`);
+        throw new Error(`Document ${collectionNameStr}/${docIdStr} does not exist`);
+      }
+      
+      // Remove undefined values to avoid Firebase errors
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([_, value]) => value !== undefined)
+      );
+      
       await updateDoc(docRef, {
-        ...updates,
+        ...cleanUpdates,
         updatedAt: serverTimestamp(),
       });
       return true;
     } catch (error) {
-      console.error(`Error updating ${collectionName}/${docId}:`, error);
+      console.error(`❌ Error updating ${collectionName}/${docId}:`, error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        docId: docId,
+        docIdType: typeof docId,
+        collectionName: collectionName,
+        collectionNameType: typeof collectionName,
+      });
       throw error;
     }
   }
@@ -356,6 +396,15 @@ class FirestoreService {
         .filter((user) => user.pharmacyProfile)
         .map((user) => {
           const profile = user.pharmacyProfile;
+          const reviews = Array.isArray(profile.reviews) ? profile.reviews : [];
+          
+          // Calculate average rating from reviews if reviews exist
+          let calculatedRating = profile.rating || 4.5;
+          if (reviews.length > 0) {
+            const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
+            calculatedRating = Math.round((sum / reviews.length) * 10) / 10; // Round to 1 decimal place
+          }
+          
           const pharmacy = {
             id: user.email || user.id,
             name: profile.pharmacyName,
@@ -365,21 +414,39 @@ class FirestoreService {
             phone: profile.phoneNumber,
             email: profile.email || user.email,
             hours: profile.hours,
-            rating: profile.rating || 4.5,
-            reviews: profile.reviews || 0,
+            rating: calculatedRating,
+            reviews: reviews,
             image: profile.profilePicture || null,
+            description: profile.description || "",
             products: profile.products || [],
             isRegistered: true,
           };
           return pharmacy;
         });
 
+      // Calculate rating from reviews for pharmacies from collection
+      const pharmaciesWithCalculatedRating = pharmaciesFromCollection.map(pharmacy => {
+        const reviews = Array.isArray(pharmacy.reviews) ? pharmacy.reviews : [];
+        let calculatedRating = pharmacy.rating || 4.5;
+        
+        if (reviews.length > 0) {
+          const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
+          calculatedRating = Math.round((sum / reviews.length) * 10) / 10; // Round to 1 decimal place
+        }
+        
+        return {
+          ...pharmacy,
+          rating: calculatedRating,
+          reviews: reviews,
+        };
+      });
+
       // Combine and remove duplicates based on id or email
       // Priority: registered pharmacies (from users) override pharmacies from collection
       const uniquePharmacies = new Map();
       
       // First, add all pharmacies from pharmacies collection
-      for (const pharmacy of pharmaciesFromCollection) {
+      for (const pharmacy of pharmaciesWithCalculatedRating) {
         const id = pharmacy.id?.toString();
         const email = pharmacy.email?.toLowerCase();
         const key = id || email || `pharmacy-${Math.random()}`;
@@ -396,7 +463,31 @@ class FirestoreService {
         uniquePharmacies.set(key, pharmacy); // Override if exists
       }
 
-      return Array.from(uniquePharmacies.values());
+      const allPharmacies = Array.from(uniquePharmacies.values());
+      
+      // Calculate isTopRated based on rating (top 10 pharmacies)
+      // Sort by rating (descending) and mark top 10 as isTopRated
+      const sortedPharmacies = [...allPharmacies].sort((a, b) => {
+        const ratingA = a.rating || 0;
+        const ratingB = b.rating || 0;
+        if (ratingB !== ratingA) {
+          return ratingB - ratingA; // Higher rating first
+        }
+        // If same rating, sort by number of reviews
+        const reviewsA = Array.isArray(a.reviews) ? a.reviews.length : 0;
+        const reviewsB = Array.isArray(b.reviews) ? b.reviews.length : 0;
+        return reviewsB - reviewsA;
+      });
+      
+      // Mark top 10 as isTopRated
+      const top10Pharmacies = sortedPharmacies.slice(0, 10);
+      const top10Ids = new Set(top10Pharmacies.map(p => p.id || p.email));
+      
+      // Update isTopRated for all pharmacies
+      return allPharmacies.map(pharmacy => ({
+        ...pharmacy,
+        isTopRated: top10Ids.has(pharmacy.id || pharmacy.email),
+      }));
     } catch (error) {
       console.error("Error getting pharmacies:", error);
       return [];
@@ -505,8 +596,13 @@ class FirestoreService {
 
   async addAppointment(appointment) {
     try {
+      // Remove undefined values to avoid Firebase errors
+      const cleanAppointment = Object.fromEntries(
+        Object.entries(appointment).filter(([_, value]) => value !== undefined)
+      );
+      
       const newAppointment = {
-        ...appointment,
+        ...cleanAppointment,
         dateCreated: serverTimestamp(),
       };
       return await this.add("appointments", newAppointment);
@@ -523,6 +619,7 @@ class FirestoreService {
   // Orders methods
   async getOrders(filters = {}) {
     try {
+      // Remove orderBy to avoid index requirement - we'll sort after fetching
       const whereFilters = [];
       if (filters.patientId) {
         whereFilters.push({ field: "patientId", operator: "==", value: filters.patientId });
@@ -536,7 +633,13 @@ class FirestoreService {
 
       const orders = await this.get("orders", {
         where: whereFilters,
-        orderBy: [{ field: "date", direction: "desc" }],
+      });
+
+      // Sort by date (descending) after fetching
+      orders.sort((a, b) => {
+        const dateA = a.date?.toDate ? a.date.toDate().getTime() : a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date?.toDate ? b.date.toDate().getTime() : b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA; // Descending order
       });
 
       return orders;
@@ -566,25 +669,23 @@ class FirestoreService {
   // Notifications methods
   async getNotifications(filters = {}) {
     try {
-      const whereFilters = [];
-      if (filters.userId) {
-        // Check for pharmacyId, doctorId, or patientId
-        whereFilters.push(
-          { field: "pharmacyId", operator: "==", value: filters.userId },
-          { field: "doctorId", operator: "==", value: filters.userId },
-          { field: "patientId", operator: "==", value: filters.userId }
-        );
-      }
-      if (filters.read !== undefined) {
-        whereFilters.push({ field: "read", operator: "==", value: filters.read });
-      }
-
-      // Get all notifications and filter client-side for userId (since Firestore doesn't support OR queries easily)
+      // Get all notifications and filter client-side (since Firestore doesn't support OR queries easily)
       let notifications = await this.get("notifications", {
         orderBy: [{ field: "date", direction: "desc" }],
       });
 
-      // Filter by userId if provided
+      // Filter by pharmacyId, doctorId, or patientId if provided
+      if (filters.pharmacyId) {
+        notifications = notifications.filter((notif) => notif.pharmacyId === filters.pharmacyId);
+      }
+      if (filters.doctorId) {
+        notifications = notifications.filter((notif) => notif.doctorId === filters.doctorId);
+      }
+      if (filters.patientId) {
+        notifications = notifications.filter((notif) => notif.patientId === filters.patientId);
+      }
+      
+      // Also support userId for backward compatibility
       if (filters.userId) {
         notifications = notifications.filter(
           (notif) =>
@@ -745,59 +846,6 @@ class FirestoreService {
     }
   }
 
-  // Messages methods
-  async getMessages(filters = {}) {
-    try {
-      if (filters.senderId && filters.receiverId) {
-        // Get messages between two users
-        const sentMessages = await this.get("messages", {
-          where: [
-            { field: "senderId", operator: "==", value: filters.senderId },
-            { field: "receiverId", operator: "==", value: filters.receiverId },
-          ],
-        });
-
-        const receivedMessages = await this.get("messages", {
-          where: [
-            { field: "senderId", operator: "==", value: filters.receiverId },
-            { field: "receiverId", operator: "==", value: filters.senderId },
-          ],
-        });
-
-        const allMessages = [...sentMessages, ...receivedMessages];
-        return allMessages.sort((a, b) => {
-          const dateA = new Date(a.timestamp || a.date || 0);
-          const dateB = new Date(b.timestamp || b.date || 0);
-          return dateA - dateB;
-        });
-      }
-
-      return await this.get("messages", {
-        orderBy: [{ field: "timestamp", direction: "asc" }],
-      });
-    } catch (error) {
-      console.error("Error getting messages:", error);
-      return [];
-    }
-  }
-
-  async addMessage(message) {
-    try {
-      const newMessage = {
-        ...message,
-        timestamp: serverTimestamp(),
-        read: false,
-      };
-      return await this.add("messages", newMessage);
-    } catch (error) {
-      console.error("Error adding message:", error);
-      throw error;
-    }
-  }
-
-  async markMessageAsRead(id) {
-    return await this.update("messages", id, { read: true });
-  }
 
   // Users methods (for CurrentUser - still using localStorage for now)
   async getCurrentUser() {
@@ -850,7 +898,47 @@ class FirestoreService {
         updatedAt: serverTimestamp(),
       };
       const docRef = await addDoc(collection(db, "users"), user);
-      return { id: docRef.id, ...userData };
+      const savedUser = { id: docRef.id, ...userData };
+      
+      // إذا كان المستخدم صيدلية، أضفه في collection "pharmacies"
+      if (userData.role === "Pharmacy") {
+        try {
+          const pharmacyData = {
+            id: userData.email,
+            name: userData.name,
+            email: userData.email,
+            isRegistered: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          };
+          const pharmacyRef = doc(db, "pharmacies", userData.email);
+          await setDoc(pharmacyRef, pharmacyData, { merge: true });
+        } catch (error) {
+          console.error("❌ Error adding pharmacy to pharmacies collection:", error);
+          // Don't throw - we don't want to fail user creation if this fails
+        }
+      }
+      
+      // إذا كان المستخدم طبيب، أضفه في collection "doctors"
+      if (userData.role === "Doctor") {
+        try {
+          const doctorData = {
+            id: userData.email,
+            name: userData.name,
+            email: userData.email,
+            isRegistered: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          };
+          const doctorRef = doc(db, "doctors", userData.email);
+          await setDoc(doctorRef, doctorData, { merge: true });
+        } catch (error) {
+          console.error("❌ Error adding doctor to doctors collection:", error);
+          // Don't throw - we don't want to fail user creation if this fails
+        }
+      }
+      
+      return savedUser;
     } catch (error) {
       console.error("Error adding user:", error);
       throw error;
@@ -863,7 +951,8 @@ class FirestoreService {
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         const doc = querySnapshot.docs[0];
-        return { id: doc.id, ...doc.data() };
+        // Put id after spread to ensure doc.id (document ID) takes precedence over any id in data
+        return { ...doc.data(), id: doc.id };
       }
       return null;
     } catch (error) {
@@ -895,6 +984,50 @@ class FirestoreService {
       // If pharmacy profile is updated, also add/update in pharmacies collection
       if (updated.pharmacyProfile) {
         await this.addOrUpdatePharmacy(updated.email, updated.pharmacyProfile);
+      }
+
+      // If user role is Pharmacy, ensure it exists in pharmacies collection
+      if (user.role === "Pharmacy" || updated.role === "Pharmacy") {
+        try {
+          const pharmacyRef = doc(db, "pharmacies", email);
+          const pharmacyDoc = await getDoc(pharmacyRef);
+          
+          if (!pharmacyDoc.exists()) {
+            const pharmacyData = {
+              id: email,
+              name: updated.name || user.name,
+              email: email,
+              isRegistered: true,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+            await setDoc(pharmacyRef, pharmacyData, { merge: true });
+          }
+        } catch (error) {
+          console.error("❌ Error adding pharmacy to pharmacies collection:", error);
+        }
+      }
+
+      // If user role is Doctor, ensure it exists in doctors collection
+      if (user.role === "Doctor" || updated.role === "Doctor") {
+        try {
+          const doctorRef = doc(db, "doctors", email);
+          const doctorDoc = await getDoc(doctorRef);
+          
+          if (!doctorDoc.exists()) {
+            const doctorData = {
+              id: email,
+              name: updated.name || user.name,
+              email: email,
+              isRegistered: true,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+            await setDoc(doctorRef, doctorData, { merge: true });
+          }
+        } catch (error) {
+          console.error("❌ Error adding doctor to doctors collection:", error);
+        }
       }
       
       return updated;
@@ -968,8 +1101,9 @@ class FirestoreService {
         email: email,
         hours: pharmacyProfile.hours,
         rating: pharmacyProfile.rating || 4.5,
-        reviews: pharmacyProfile.reviews || 0,
+        reviews: Array.isArray(pharmacyProfile.reviews) ? pharmacyProfile.reviews : [],
         image: pharmacyProfile.profilePicture || null,
+        description: pharmacyProfile.description || "",
         products: pharmacyProfile.products || [],
         isRegistered: true,
         updatedAt: serverTimestamp(),

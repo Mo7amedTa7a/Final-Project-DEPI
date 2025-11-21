@@ -180,6 +180,7 @@ const Pharmacies = () => {
               value={locationFilter}
               label="Location"
               onChange={(e) => setLocationFilter(e.target.value)}
+              MenuProps={{ disableScrollLock: true }}
               startAdornment={
                 <InputAdornment position="start" sx={{ ml: 1 }}>
                   <FilterListIcon sx={{ color: "text.secondary", fontSize: 20 }} />
@@ -209,6 +210,7 @@ const Pharmacies = () => {
               value={governorateFilter}
               label="Governorate"
               onChange={(e) => handleGovernorateChange(e.target.value)}
+              MenuProps={{ disableScrollLock: true }}
               sx={{
                 borderRadius: 2,
               }}
@@ -357,7 +359,7 @@ const Pharmacies = () => {
                                 ml: 0.5,
                               }}
                             >
-                              ({pharmacy.reviews} reviews)
+                              ({Array.isArray(pharmacy.reviews) ? pharmacy.reviews.length : pharmacy.reviews || 0} reviews)
                             </Typography>
                           </Box>
                         </Box>

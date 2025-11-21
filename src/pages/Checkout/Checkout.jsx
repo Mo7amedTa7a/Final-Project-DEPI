@@ -166,61 +166,126 @@ const Checkout = () => {
 
     try {
       if (orderData.type === "products") {
-        // Save order
-        const orders = JSON.parse(localStorage.getItem("Orders") || "[]");
-        const order = {
-          id: Date.now(),
-          patientId: currentUser.email,
-          patientName: currentUser.patientProfile?.fullName || currentUser.name,
-          items: orderData.items,
-          total: orderData.total,
-          status: "pending",
-          date: new Date().toISOString(),
-          paymentMethod,
-          paymentStatus: "paid",
-        };
-        orders.push(order);
-        localStorage.setItem("Orders", JSON.stringify(orders));
-
-        // Create notification for pharmacy
-        const notifications = JSON.parse(localStorage.getItem("Notifications") || "[]");
+        // Save order to Firebase and localStorage
+        const FirestoreService = (await import("../../services/FirestoreService")).default;
+        
+        // Group items by pharmacy
+        const itemsByPharmacy = {};
         orderData.items.forEach((item) => {
+          // Use pharmacyId (email) as primary identifier, fallback to pharmacyName
+          const pharmacyId = item.pharmacyId || item.pharmacyName;
+          const pharmacyName = item.pharmacyName || item.pharmacyId;
+          if (!itemsByPharmacy[pharmacyId]) {
+            itemsByPharmacy[pharmacyId] = {
+              items: [],
+              pharmacyId: pharmacyId,
+              pharmacyName: pharmacyName,
+            };
+          }
+          itemsByPharmacy[pharmacyId].items.push(item);
+        });
+
+        // Create separate order for each pharmacy
+        const orderPromises = [];
+        const orderIds = [];
+        
+        for (const [pharmacyId, pharmacyData] of Object.entries(itemsByPharmacy)) {
+          const pharmacyItems = pharmacyData.items;
+          const pharmacyTotal = pharmacyItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+          const order = {
+            id: Date.now() + Math.random(), // Temporary ID, will be replaced by Firebase
+            patientId: currentUser.email,
+            patientName: currentUser.patientProfile?.fullName || currentUser.name,
+            pharmacyId: pharmacyId, // Use pharmacyId (email) as primary identifier
+            pharmacyName: pharmacyData.pharmacyName, // Also store pharmacyName for display
+            items: pharmacyItems,
+            total: pharmacyTotal,
+            status: "pending",
+            date: new Date().toISOString(),
+            paymentMethod,
+            paymentStatus: "paid",
+          };
+          
+          // Save to Firebase
+          try {
+            const savedOrder = await FirestoreService.addOrder(order);
+            order.id = savedOrder.id || order.id;
+            orderIds.push(order.id);
+          } catch (error) {
+            console.error("❌ Error saving order to Firebase:", error);
+            // Continue with localStorage fallback
+          }
+          
+          // Also save to localStorage for backward compatibility
+          const orders = JSON.parse(localStorage.getItem("Orders") || "[]");
+          orders.push(order);
+          localStorage.setItem("Orders", JSON.stringify(orders));
+          
+          orderPromises.push(order);
+        }
+
+        // Create notification for each pharmacy in Firebase
+        for (const order of orderPromises) {
           const pharmacyNotification = {
-            id: Date.now() + Math.random(),
             type: "order",
             title: "New Order Received",
-            message: `${currentUser.patientProfile?.fullName || currentUser.name} placed an order for ${item.name}`,
-            pharmacyId: item.pharmacyId || item.pharmacyName,
+            message: `${currentUser.patientProfile?.fullName || currentUser.name} placed an order`,
+            pharmacyId: order.pharmacyId,
             orderId: order.id,
-            date: new Date().toISOString(),
             read: false,
           };
-          notifications.push(pharmacyNotification);
-        });
-        localStorage.setItem("Notifications", JSON.stringify(notifications));
+          
+          // Save to Firebase
+          try {
+            await FirestoreService.addNotification(pharmacyNotification);
+          } catch (error) {
+            console.error("❌ Error saving notification to Firebase:", error);
+          }
+          
+          // Also save to localStorage for backward compatibility
+          const notifications = JSON.parse(localStorage.getItem("Notifications") || "[]");
+          notifications.push({ ...pharmacyNotification, id: Date.now() + Math.random(), date: new Date().toISOString() });
+          localStorage.setItem("Notifications", JSON.stringify(notifications));
+        }
 
         // Clear cart
         localStorage.removeItem("Cart");
         window.dispatchEvent(new Event("storage"));
 
-        // Save transaction to pharmacy wallet
-        const walletTransactions = JSON.parse(localStorage.getItem("WalletTransactions") || "[]");
-        orderData.items.forEach((item) => {
-          const transaction = {
-            id: Date.now() + Math.random(),
-            type: "income",
-            amount: item.price * item.quantity,
-            description: `Order from ${currentUser.patientProfile?.fullName || currentUser.name}`,
-            pharmacyId: item.pharmacyId || item.pharmacyName,
-            orderId: order.id,
-            date: new Date().toISOString(),
-            status: "completed",
-          };
-          walletTransactions.push(transaction);
-        });
-        localStorage.setItem("WalletTransactions", JSON.stringify(walletTransactions));
+        // Save transaction to pharmacy wallet in Firebase
+        for (const order of orderPromises) {
+          order.items.forEach((item) => {
+            const transaction = {
+              type: "income",
+              amount: item.price * item.quantity,
+              description: `Order from ${currentUser.patientProfile?.fullName || currentUser.name}`,
+              pharmacyId: order.pharmacyId,
+              orderId: order.id,
+              status: "completed",
+            };
+            
+            // Save to Firebase
+            try {
+              FirestoreService.addWalletTransaction(transaction);
+            } catch (error) {
+              console.error("❌ Error saving wallet transaction to Firebase:", error);
+            }
+            
+            // Also save to localStorage for backward compatibility
+            const walletTransactions = JSON.parse(localStorage.getItem("WalletTransactions") || "[]");
+            walletTransactions.push({ ...transaction, id: Date.now() + Math.random(), date: new Date().toISOString() });
+            localStorage.setItem("WalletTransactions", JSON.stringify(walletTransactions));
+          });
+        }
 
-        navigate("/wallet?success=true&type=order");
+        // Navigate based on user role
+        const userRole = currentUser?.role;
+        if (userRole === "Pharmacy" || userRole === "Doctor") {
+          navigate("/wallet?success=true&type=order");
+        } else {
+          // For patients, navigate to orders page
+          navigate("/orders?success=true&type=order");
+        }
       } else if (orderData.type === "appointment") {
         // Ensure doctorId is the doctor's email
         const doctorEmail = orderData.doctorId; // Should be email from DoctorProfile
@@ -275,18 +340,38 @@ const Checkout = () => {
           bookingTime: bookingTime, // Time when appointment was booked (for queue ordering)
         };
         
+        // Video call meeting fields (only for video appointments)
+        // Only add these fields for video appointments to avoid undefined values in Firebase
+        if (orderData.appointmentType === "video") {
+          appointment.meetingStatus = "waiting"; // waiting, started, joined
+          // meetingLink will be added when doctor starts the meeting
+        }
+        
+        // Remove undefined values before saving to Firebase
+        const cleanAppointment = Object.fromEntries(
+          Object.entries(appointment).filter(([_, value]) => value !== undefined)
+        );
+        
         // Save to Firebase
-        const savedAppointment = await FirestoreService.addAppointment(appointment);
+        const savedAppointment = await FirestoreService.addAppointment(cleanAppointment);
         const appointmentId = savedAppointment.id || Date.now().toString();
         
         // Also save to localStorage for backward compatibility
-        const appointments = JSON.parse(localStorage.getItem("Appointments") || "[]");
-        appointments.push({ 
-          ...appointment, 
-          id: appointmentId, 
+        // Use cleanAppointment but ensure meetingStatus is set for video appointments
+        const appointmentForLocalStorage = {
+          ...cleanAppointment,
+          id: appointmentId,
           dateCreated: new Date().toISOString(),
           bookingTime: bookingTime, // Ensure bookingTime is included
-        });
+        };
+        
+        // Ensure meetingStatus is set for video appointments in localStorage
+        if (orderData.appointmentType === "video" && !appointmentForLocalStorage.meetingStatus) {
+          appointmentForLocalStorage.meetingStatus = "waiting";
+        }
+        
+        const appointments = JSON.parse(localStorage.getItem("Appointments") || "[]");
+        appointments.push(appointmentForLocalStorage);
         localStorage.setItem("Appointments", JSON.stringify(appointments));
         window.dispatchEvent(new Event("storage"));
 
@@ -337,7 +422,14 @@ const Checkout = () => {
         // Clear pending appointment
         sessionStorage.removeItem("pendingAppointment");
 
-        navigate("/wallet?success=true&type=appointment");
+        // Navigate based on user role
+        const userRole = currentUser?.role;
+        if (userRole === "Pharmacy" || userRole === "Doctor") {
+          navigate("/wallet?success=true&type=appointment");
+        } else {
+          // For patients, navigate to dashboard
+          navigate("/dashboard?success=true&type=appointment");
+        }
       }
     } catch (error) {
       alert("Payment failed. Please try again.");

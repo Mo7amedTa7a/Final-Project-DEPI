@@ -480,6 +480,7 @@ export default function PharmacyProfileSetup() {
                       value={newProduct.stock}
                       label="Stock Status"
                       onChange={(e) => setNewProduct((prev) => ({ ...prev, stock: e.target.value }))}
+                      MenuProps={{ disableScrollLock: true }}
                     >
                       <MenuItem value="In Stock">In Stock</MenuItem>
                       <MenuItem value="Low Stock">Low Stock</MenuItem>

@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import OrderTimeline from "../PharmacyProfile/OrderTimeline";
 
 const CartPage = () => {
   const theme = useTheme();
@@ -41,29 +40,55 @@ const CartPage = () => {
       }
     }
 
-    // Listen for cart changes
+    // Listen for cart changes from same window (custom event)
+    const handleCartUpdated = (e) => {
+      if (e.detail?.cart) {
+        setCart(e.detail.cart);
+      } else {
+        const updatedCart = localStorage.getItem("Cart");
+        if (updatedCart) {
+          try {
+            setCart(JSON.parse(updatedCart));
+          } catch (error) {
+            setCart([]);
+          }
+        } else {
+          setCart([]);
+        }
+      }
+    };
+
+    // Listen for cart changes from other tabs/windows (storage event)
     const handleStorageChange = () => {
       const updatedCart = localStorage.getItem("Cart");
       if (updatedCart) {
         try {
           setCart(JSON.parse(updatedCart));
         } catch (error) {
-          // Error loading cart
+          setCart([]);
         }
       } else {
         setCart([]);
       }
     };
 
+    window.addEventListener("cartUpdated", handleCartUpdated);
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("cartUpdated", handleCartUpdated);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   const handleRemoveFromCart = (itemId) => {
     const updatedCart = cart.filter((item) => item.id !== itemId);
     setCart(updatedCart);
     localStorage.setItem("Cart", JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event("storage"));
+    // Dispatch custom event to update Header without re-rendering other components
+    window.dispatchEvent(new CustomEvent("cartUpdated", { 
+      detail: { cart: updatedCart, totalItems: updatedCart.reduce((sum, item) => sum + item.quantity, 0) }
+    }));
   };
 
   const handleUpdateQuantity = (itemId, change) => {
@@ -74,7 +99,10 @@ const CartPage = () => {
     );
     setCart(updatedCart);
     localStorage.setItem("Cart", JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event("storage"));
+    // Dispatch custom event to update Header without re-rendering other components
+    window.dispatchEvent(new CustomEvent("cartUpdated", { 
+      detail: { cart: updatedCart, totalItems: updatedCart.reduce((sum, item) => sum + item.quantity, 0) }
+    }));
   };
 
   const subtotal = cart.reduce(
@@ -325,29 +353,6 @@ const CartPage = () => {
                 >
                   Proceed to Checkout
                 </Button>
-              </Card>
-            )}
-
-            {/* Order Timeline */}
-            {cart.length > 0 && (
-              <Card
-                sx={{
-                  borderRadius: "16px",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-                  p: 3,
-                }}
-              >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: "bold",
-                    mb: 2,
-                    color: theme.palette.text.primary,
-                  }}
-                >
-                  Order Status
-                </Typography>
-                <OrderTimeline theme={theme} />
               </Card>
             )}
           </Box>

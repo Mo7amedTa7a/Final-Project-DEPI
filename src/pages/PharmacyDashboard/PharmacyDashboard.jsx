@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDataManager, useCurrentUser } from "../../hooks/useDataManager";
+import { useOrders } from "../../hooks/useData";
+import FirestoreService from "../../services/FirestoreService";
 import {
   Box,
   Container,
@@ -36,6 +38,7 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 const PharmacyDashboard = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [pharmacyProfile, setPharmacyProfile] = useState(null);
   const [products, setProducts] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
@@ -50,65 +53,221 @@ const PharmacyDashboard = () => {
     image: null,
   });
 
-  const { currentUser } = useCurrentUser();
+  const { currentUser, loading } = useCurrentUser();
 
   // Check if user is logged in and load pharmacy data
   useEffect(() => {
-    if (!currentUser || !currentUser.email) {
-      navigate("/login", { replace: true });
-      return;
+    // Wait for loading to complete before checking
+    if (!loading) {
+      if (!currentUser || !currentUser.email) {
+        navigate("/login", { replace: true });
+        return;
+      }
+      if (currentUser.pharmacyProfile) {
+        setPharmacyProfile(currentUser.pharmacyProfile);
+        setProducts(currentUser.pharmacyProfile.products || []);
+      }
     }
-    if (currentUser.pharmacyProfile) {
-      setPharmacyProfile(currentUser.pharmacyProfile);
-      setProducts(currentUser.pharmacyProfile.products || []);
-    }
-  }, [currentUser, navigate]);
+  }, [currentUser, loading, navigate]);
 
-  const { data: orders } = useDataManager("Orders", []);
+  // Load latest pharmacy data from Firebase
+  useEffect(() => {
+    const loadPharmacyFromFirebase = async () => {
+      if (!currentUser || !currentUser.email || loading) return;
+      
+      try {
+        const user = await FirestoreService.getUserByEmail(currentUser.email);
+        if (user && user.pharmacyProfile) {
+          const firebaseProducts = user.pharmacyProfile.products || [];
+          
+          // Merge Firebase products with localStorage products (prioritize Firebase)
+          const localProducts = currentUser.pharmacyProfile?.products || [];
+          const mergedProducts = [...firebaseProducts];
+          
+          // Add local products that don't exist in Firebase (by ID)
+          const firebaseIds = new Set(firebaseProducts.map(p => p.id));
+          localProducts.forEach(localProduct => {
+            if (!firebaseIds.has(localProduct.id)) {
+              mergedProducts.push(localProduct);
+            }
+          });
+          
+          if (mergedProducts.length > 0 || firebaseProducts.length !== localProducts.length) {
+            setProducts(mergedProducts);
+            setPharmacyProfile(user.pharmacyProfile);
+            
+            // Update localStorage with latest data
+            const updatedUser = {
+              ...currentUser,
+              pharmacyProfile: {
+                ...currentUser.pharmacyProfile,
+                products: mergedProducts,
+              },
+            };
+            localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
+          }
+        }
+      } catch (error) {
+        console.error("Error loading pharmacy from Firebase:", error);
+      }
+    };
+    
+    loadPharmacyFromFirebase();
+  }, [currentUser?.email, loading]);
+
+  // Get orders from Firebase and localStorage
+  const { orders: firebaseOrders, isLoading: ordersLoading } = useOrders({});
+  const { data: localOrders } = useDataManager("Orders", []);
   const { data: transactions } = useDataManager("WalletTransactions", []);
+  
+  // Combine Firebase and localStorage orders, removing duplicates
+  const orders = useMemo(() => {
+    const allOrders = [...firebaseOrders];
+    const firebaseIds = new Set(firebaseOrders.map(o => o.id));
+    
+    // Add local orders that don't exist in Firebase
+    localOrders.forEach(localOrder => {
+      if (!firebaseIds.has(localOrder.id)) {
+        allOrders.push(localOrder);
+      }
+    });
+    
+    return allOrders;
+  }, [firebaseOrders, localOrders]);
 
   // Calculate statistics dynamically
   const calculateStats = useMemo(() => {
     // Calculate items low on stock
     const lowStockItems = products.filter((p) => p.stock === "Low Stock").length;
     
-    // Get pharmacy ID
-    const pharmacyId = pharmacyProfile?.name || currentUser?.email;
+    // Get pharmacy ID (try multiple formats - pharmacy.id is usually the email)
+    const pharmacyId = currentUser?.email; // Primary identifier is email
+    const pharmacyName = pharmacyProfile?.pharmacyName || pharmacyProfile?.name;
     
     // Filter orders for this pharmacy
-    const pharmacyOrders = orders.filter(
-      (order) => order.pharmacyId === pharmacyId || order.items?.some(item => item.pharmacyId === pharmacyId)
-    );
+    const pharmacyOrders = orders.filter((order) => {
+      // Check if order has pharmacyId directly (should be email)
+      if (order.pharmacyId) {
+        const orderPharmacyId = String(order.pharmacyId).toLowerCase();
+        const currentPharmacyId = String(pharmacyId).toLowerCase();
+        const orderPharmacyName = String(order.pharmacyName || "").toLowerCase();
+        const currentPharmacyName = String(pharmacyName || "").toLowerCase();
+        
+        return orderPharmacyId === currentPharmacyId ||
+               orderPharmacyName === currentPharmacyName ||
+               orderPharmacyId === currentPharmacyName ||
+               orderPharmacyName === currentPharmacyId;
+      }
+      // Check if any item in the order belongs to this pharmacy
+      if (order.items && Array.isArray(order.items)) {
+        return order.items.some(item => {
+          const itemPharmacyId = String(item.pharmacyId || "").toLowerCase();
+          const itemPharmacyName = String(item.pharmacyName || "").toLowerCase();
+          const currentPharmacyId = String(pharmacyId).toLowerCase();
+          const currentPharmacyName = String(pharmacyName || "").toLowerCase();
+          
+          return itemPharmacyId === currentPharmacyId ||
+                 itemPharmacyName === currentPharmacyName ||
+                 itemPharmacyId === currentPharmacyName ||
+                 itemPharmacyName === currentPharmacyId;
+        });
+      }
+      return false;
+    });
     
-    // Calculate new orders (status: "New" or "pending")
+    // Calculate new orders (status: "pending")
     const newOrders = pharmacyOrders.filter(
-      (order) => order.status === "New" || order.status === "pending"
+      (order) => {
+        const status = String(order.status || "").toLowerCase();
+        return status === "pending" || status === "معلق";
+      }
     ).length;
     
-    // Calculate pending fulfillment
+    // Calculate pending fulfillment (status: "shipped" - orders that are being processed)
     const pendingFulfillment = pharmacyOrders.filter(
-      (order) => order.status === "Preparing" || order.status === "Processing"
+      (order) => {
+        const status = String(order.status || "").toLowerCase();
+        return status === "shipped" || status === "تم الشحن";
+      }
     ).length;
     
-    // Calculate total revenue from transactions
-    const today = new Date().toISOString().split("T")[0];
+    // Calculate total revenue from orders (today's completed/delivered orders)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
+    
+    // Get today's orders that are completed or delivered
+    const todayOrders = pharmacyOrders.filter((order) => {
+      const orderDate = order.date || order.createdAt || order.dateCreated;
+      if (!orderDate) return false;
+      
+      let orderDateStr = "";
+      try {
+        if (orderDate.toDate) {
+          orderDateStr = orderDate.toDate().toISOString().split("T")[0];
+        } else if (typeof orderDate === "string") {
+          orderDateStr = orderDate.split("T")[0];
+        } else {
+          orderDateStr = new Date(orderDate).toISOString().split("T")[0];
+        }
+      } catch (e) {
+        return false;
+      }
+      
+      const status = String(order.status || "").toLowerCase();
+      const isCompleted = status === "completed" || status === "delivered" || status === "مكتمل" || status === "تم التوصيل";
+      
+      return orderDateStr === todayStr && isCompleted;
+    });
+    
+    // Calculate total revenue from today's completed orders
+    const totalRevenue = todayOrders.reduce((sum, order) => {
+      return sum + (parseFloat(order.total) || parseFloat(order.totalPrice) || 0);
+    }, 0);
+    
+    // Also check transactions as fallback
     const todayTransactions = transactions.filter(
-      (t) => t.pharmacyId === pharmacyId && t.type === "income" && t.date?.startsWith(today)
+      (t) => {
+        const tPharmacyId = String(t.pharmacyId || "").toLowerCase();
+        const currentPharmacyId = String(pharmacyId || "").toLowerCase();
+        const tDate = t.date || t.createdAt || t.dateCreated;
+        
+        if (!tDate) return false;
+        
+        let tDateStr = "";
+        try {
+          if (tDate.toDate) {
+            tDateStr = tDate.toDate().toISOString().split("T")[0];
+          } else if (typeof tDate === "string") {
+            tDateStr = tDate.split("T")[0];
+          } else {
+            tDateStr = new Date(tDate).toISOString().split("T")[0];
+          }
+        } catch (e) {
+          return false;
+        }
+        
+        return tPharmacyId === currentPharmacyId && 
+               t.type === "income" && 
+               tDateStr === todayStr;
+      }
     );
-    const totalRevenue = todayTransactions.reduce((sum, t) => sum + (t.amount || 0), 0);
+    
+    const revenueFromTransactions = todayTransactions.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+    const finalRevenue = totalRevenue > 0 ? totalRevenue : revenueFromTransactions;
     
     // Calculate percentage changes (compare with previous period)
-    // For now, using simple calculations
-    const newOrdersChange = newOrders > 0 ? 5 : 0;
-    const pendingChange = pendingFulfillment > 0 ? 2 : 0;
-    const lowStockChange = lowStockItems > 0 ? -1 : 0;
-    const revenueChange = totalRevenue > 0 ? 8 : 0;
+    // For now, using simple calculations based on actual values
+    const newOrdersChange = newOrders > 0 ? Math.min(newOrders * 10, 100) : 0;
+    const pendingChange = pendingFulfillment > 0 ? Math.min(pendingFulfillment * 5, 100) : 0;
+    const lowStockChange = lowStockItems > 0 ? -Math.min(lowStockItems * 2, 50) : 0;
+    const revenueChange = finalRevenue > 0 ? Math.min(Math.round((finalRevenue / 100) * 10), 100) : 0;
     
     return {
       newOrders,
       pendingFulfillment,
       lowStockItems,
-      totalRevenue,
+      totalRevenue: finalRevenue,
       newOrdersChange,
       pendingChange,
       lowStockChange,
@@ -204,7 +363,7 @@ const PharmacyDashboard = () => {
     setErrorMessage("");
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!newProduct.name || !newProduct.price || !newProduct.image) {
       setErrorMessage("Please fill in all product fields");
       setErrorToast(true);
@@ -262,6 +421,7 @@ const PharmacyDashboard = () => {
     };
 
     try {
+      // Save to localStorage first
       localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
 
       // Update in users array
@@ -269,6 +429,16 @@ const PharmacyDashboard = () => {
         user.email === updatedUser.email ? updatedUser : user
       );
       localStorage.setItem("Users", JSON.stringify(updatedUsers));
+
+      // Save to Firebase
+      try {
+        await FirestoreService.updateUser(currentUser.email, {
+          pharmacyProfile: updatedPharmacyProfile,
+        });
+      } catch (firebaseError) {
+        console.error("❌ Error saving product to Firebase:", firebaseError);
+        // Don't fail the whole operation if Firebase fails - localStorage is already saved
+      }
 
       setSuccessToast(true);
       handleCloseDialog();
@@ -284,7 +454,7 @@ const PharmacyDashboard = () => {
     }
   };
 
-  const handleDeleteProduct = (productId) => {
+  const handleDeleteProduct = async (productId) => {
     if (!currentUser || !currentUser.email) {
       navigate("/login");
       return;
@@ -307,6 +477,7 @@ const PharmacyDashboard = () => {
     };
 
     try {
+      // Save to localStorage first
       localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
 
       // Update in users array
@@ -314,6 +485,16 @@ const PharmacyDashboard = () => {
         user.email === updatedUser.email ? updatedUser : user
       );
       localStorage.setItem("Users", JSON.stringify(updatedUsers));
+
+      // Save to Firebase
+      try {
+        await FirestoreService.updateUser(currentUser.email, {
+          pharmacyProfile: updatedPharmacyProfile,
+        });
+      } catch (firebaseError) {
+        console.error("❌ Error deleting product from Firebase:", firebaseError);
+        // Don't fail the whole operation if Firebase fails - localStorage is already saved
+      }
 
       setSuccessToast(true);
     } catch (error) {
@@ -624,7 +805,7 @@ const PharmacyDashboard = () => {
       </Card>
 
       {/* Add/Edit Product Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth disableScrollLock>
         <DialogTitle>
           {editingProduct ? "Edit Product" : "Add New Product"}
         </DialogTitle>
@@ -654,6 +835,7 @@ const PharmacyDashboard = () => {
                 value={newProduct.stock}
                 label="Stock Status"
                 onChange={(e) => setNewProduct((prev) => ({ ...prev, stock: e.target.value }))}
+                MenuProps={{ disableScrollLock: true }}
               >
                 <MenuItem value="In Stock">In Stock</MenuItem>
                 <MenuItem value="Low Stock">Low Stock</MenuItem>

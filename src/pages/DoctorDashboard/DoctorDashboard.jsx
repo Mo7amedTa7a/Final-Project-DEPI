@@ -56,7 +56,6 @@ const DoctorDashboard = () => {
     return Array.from(uniqueAppointments.values());
   }, [firebaseAppointments, localStorageAppointments, doctorId, currentUser]);
   
-  const { data: messages } = useDataManager("Messages", []);
 
   // Check if user is logged in and has correct role (only after loading is complete)
   // Note: ProtectedRoute already handles authentication, but we add an extra check for role
@@ -84,13 +83,8 @@ const DoctorDashboard = () => {
       (apt) => apt.date === today
     ).length;
 
-    // Count unread messages
-    const unreadMessages = messages.filter(
-      (msg) =>
-        msg.receiverId === doctorId &&
-        msg.receiverRole === "Doctor" &&
-        !msg.read
-    ).length;
+    // Unread messages removed
+    const unreadMessages = 0;
 
     // Mock pending lab results (can be replaced with real data later)
     const pendingLabResults = 3;
@@ -100,7 +94,7 @@ const DoctorDashboard = () => {
       pendingLabResults,
       unreadMessages,
     };
-  }, [appointments, messages, doctorId, currentUser]);
+  }, [appointments, doctorId, currentUser]);
 
 
   return (

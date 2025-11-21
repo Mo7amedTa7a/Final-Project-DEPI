@@ -279,10 +279,31 @@ export const useOrders = (filters = {}) => {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [firebaseLoading, setFirebaseLoading] = useState(true);
+
+  // Memoize filters to prevent unnecessary re-renders
+  const filtersKey = JSON.stringify(filters);
+
+  // Convert filters to Firestore query format
+  const firestoreFilters = useCallback(() => {
+    const whereFilters = [];
+    if (filters.patientId) {
+      whereFilters.push({ field: "patientId", operator: "==", value: filters.patientId });
+    }
+    if (filters.pharmacyId) {
+      whereFilters.push({ field: "pharmacyId", operator: "==", value: filters.pharmacyId });
+    }
+    if (filters.status) {
+      whereFilters.push({ field: "status", operator: "==", value: filters.status });
+    }
+
+    return {
+      where: whereFilters,
+    };
+  }, [filtersKey]);
 
   const loadOrders = useCallback(async () => {
     try {
-      setIsLoading(true);
       setError(null);
       const data = await DataService.getOrders(filters);
       setOrders(data);
@@ -292,13 +313,89 @@ export const useOrders = (filters = {}) => {
     } finally {
       setIsLoading(false);
     }
-  }, [filters]);
+  }, [filtersKey]);
 
   useEffect(() => {
+    // Initial load
     loadOrders();
 
-    // Subscribe to changes
-    const unsubscribe = DataService.subscribe("Orders", loadOrders);
+    // Subscribe to real-time changes from Firestore with filters
+    const queryFilters = firestoreFilters();
+    const unsubscribe = FirestoreService.subscribe("orders", (firestoreData) => {
+      setFirebaseLoading(false);
+      
+      // Merge with localStorage data
+      const localOrders = JSON.parse(localStorage.getItem("Orders") || "[]");
+      
+      // Combine and remove duplicates (prefer Firestore data)
+      // Use a Map to ensure uniqueness by ID
+      const uniqueOrders = new Map();
+      const seenIds = new Set();
+      
+      // First, add all Firebase orders (they take priority)
+      firestoreData.forEach(order => {
+        const orderId = String(order.id || "").trim();
+        if (orderId && !seenIds.has(orderId)) {
+          uniqueOrders.set(orderId, order);
+          seenIds.add(orderId);
+        }
+      });
+      
+      // Then, add localStorage orders that don't exist in Firebase
+      localOrders.forEach(localOrder => {
+        const localId = String(localOrder.id || "").trim();
+        // Only add if not already in Firebase and not already added
+        if (localId && !seenIds.has(localId)) {
+          uniqueOrders.set(localId, localOrder);
+          seenIds.add(localId);
+        }
+      });
+      
+      // Convert Map to Array
+      const allOrders = Array.from(uniqueOrders.values());
+      
+      // Apply filters to combined data
+      let filtered = allOrders;
+      if (filters.patientId) {
+        filtered = filtered.filter(order => 
+          order.patientId === filters.patientId || 
+          String(order.patientId) === String(filters.patientId) ||
+          order.patientId?.toLowerCase() === filters.patientId?.toLowerCase()
+        );
+      }
+      if (filters.pharmacyId) {
+        filtered = filtered.filter(order => {
+          if (order.pharmacyId) {
+            return order.pharmacyId === filters.pharmacyId || 
+                   String(order.pharmacyId) === String(filters.pharmacyId) ||
+                   order.pharmacyId?.toLowerCase() === filters.pharmacyId?.toLowerCase();
+          }
+          // Check items if pharmacyId is not directly on order
+          if (order.items && Array.isArray(order.items)) {
+            return order.items.some(item => {
+              const itemPharmacyId = item.pharmacyId || item.pharmacyName;
+              return itemPharmacyId === filters.pharmacyId ||
+                     String(itemPharmacyId) === String(filters.pharmacyId) ||
+                     itemPharmacyId?.toLowerCase() === filters.pharmacyId?.toLowerCase();
+            });
+          }
+          return false;
+        });
+      }
+      if (filters.status) {
+        filtered = filtered.filter(order => order.status === filters.status);
+      }
+      
+      // Sort by date after filtering
+      filtered.sort((a, b) => {
+        const dateA = a.date?.toDate ? a.date.toDate().getTime() : a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date?.toDate ? b.date.toDate().getTime() : b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA; // Descending order
+      });
+      
+      setOrders(filtered);
+      setIsLoading(false);
+    }, queryFilters);
 
     // Listen to storage events
     const handleStorageChange = () => {
@@ -310,7 +407,7 @@ export const useOrders = (filters = {}) => {
       unsubscribe();
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, [loadOrders]);
+  }, [loadOrders, firestoreFilters, filtersKey]);
 
   const addOrder = useCallback(async (order) => {
     try {
@@ -330,7 +427,7 @@ export const useOrders = (filters = {}) => {
     }
   }, []);
 
-  return { orders, isLoading, error, addOrder, updateOrder, refresh: loadOrders };
+  return { orders, isLoading: isLoading || firebaseLoading, firebaseLoading, error, addOrder, updateOrder, refresh: loadOrders };
 };
 
 export const useNotifications = (filters = {}) => {
@@ -508,61 +605,4 @@ export const usePrescriptions = (filters = {}) => {
   return { prescriptions, isLoading, error, addPrescription, refresh: loadPrescriptions };
 };
 
-export const useMessages = (filters = {}) => {
-  const [messages, setMessages] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const loadMessages = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await DataService.getMessages(filters);
-      setMessages(data);
-    } catch (err) {
-      setError(err.message);
-      console.error("Error loading messages:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters]);
-
-  useEffect(() => {
-    loadMessages();
-
-    // Subscribe to changes
-    const unsubscribe = DataService.subscribe("Messages", loadMessages);
-
-    // Listen to storage events
-    const handleStorageChange = () => {
-      loadMessages();
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      unsubscribe();
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, [loadMessages]);
-
-  const addMessage = useCallback(async (message) => {
-    try {
-      return await DataService.addMessage(message);
-    } catch (err) {
-      console.error("Error adding message:", err);
-      throw err;
-    }
-  }, []);
-
-  const markAsRead = useCallback(async (id) => {
-    try {
-      return await DataService.markMessageAsRead(id);
-    } catch (err) {
-      console.error("Error marking message as read:", err);
-      return false;
-    }
-  }, []);
-
-  return { messages, isLoading, error, addMessage, markAsRead, refresh: loadMessages };
-};
 

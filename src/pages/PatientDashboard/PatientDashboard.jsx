@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useCallback, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
   Container,
@@ -21,16 +21,18 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import PeopleIcon from "@mui/icons-material/People";
 import LocalPharmacyIcon from "@mui/icons-material/LocalPharmacy";
 import doctorImage from "../../assets/doctor.svg";
 import { useDataManager, useCurrentUser } from "../../hooks/useDataManager";
+import { useOrders, useAppointments } from "../../hooks/useData";
 import PatientQueueView from "./components/PatientQueueView";
+import FirestoreService from "../../services/FirestoreService";
 
 // Constants
 const STATUS_COLORS = {
@@ -44,10 +46,52 @@ const PatientDashboard = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { currentUser, loading } = useCurrentUser();
-  const { data: appointments } = useDataManager("Appointments", []);
-  const { data: orders } = useDataManager("Orders", []);
+  const { data: localStorageAppointments } = useDataManager("Appointments", []);
+  // Get appointments from Firebase for real-time updates
+  const { appointments: firebaseAppointments } = useAppointments({});
+  const [successSnackbar, setSuccessSnackbar] = useState({ open: false, message: "" });
+  
+  // Combine Firebase and localStorage appointments (prefer Firebase for meetingStatus)
+  const appointments = useMemo(() => {
+    // First, add all Firebase appointments (they have the latest data including meetingStatus)
+    const unique = new Map();
+    
+    firebaseAppointments?.forEach((apt) => {
+      const key = apt.id || `${apt.doctorId}-${apt.patientId}-${apt.date}-${apt.time}`;
+      unique.set(key, apt);
+    });
+    
+    // Then, add localStorage appointments only if they don't exist in Firebase
+    localStorageAppointments?.forEach((apt) => {
+      const key = apt.id || `${apt.doctorId}-${apt.patientId}-${apt.date}-${apt.time}`;
+      if (!unique.has(key)) {
+        unique.set(key, apt);
+      }
+    });
+    
+    return Array.from(unique.values());
+  }, [firebaseAppointments, localStorageAppointments]);
+  // Get orders from Firebase and localStorage
+  const { orders: firebaseOrders } = useOrders({});
+  const { data: localOrders } = useDataManager("Orders", []);
   const { data: prescriptions } = useDataManager("Prescriptions", []);
+  
+  // Combine Firebase and localStorage orders, removing duplicates
+  const orders = useMemo(() => {
+    const allOrders = [...firebaseOrders];
+    const firebaseIds = new Set(firebaseOrders.map(o => o.id));
+    
+    // Add local orders that don't exist in Firebase
+    localOrders.forEach(localOrder => {
+      if (!firebaseIds.has(localOrder.id)) {
+        allOrders.push(localOrder);
+      }
+    });
+    
+    return allOrders;
+  }, [firebaseOrders, localOrders]);
 
   // Check if user is logged in (only after loading is complete)
   useEffect(() => {
@@ -59,6 +103,22 @@ const PatientDashboard = () => {
     }
   }, [currentUser, loading, navigate]);
 
+  // Check for success message from checkout
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const type = searchParams.get("type");
+    if (success === "true") {
+      if (type === "appointment") {
+        setSuccessSnackbar({
+          open: true,
+          message: "Appointment booked successfully! Payment has been processed.",
+        });
+      }
+      // Clean URL
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   const userName = currentUser?.patientProfile?.fullName || currentUser?.name || "Patient";
 
   // Filter appointments for current user
@@ -69,8 +129,11 @@ const PatientDashboard = () => {
       .filter((apt) => apt.patientId === patientId && apt.status === "confirmed")
       .map((apt) => ({
         ...apt,
-        doctorAvatar: doctorImage,
+        doctorAvatar: apt.doctorAvatar || apt.doctorImage || doctorImage,
         appointmentType: apt.appointmentType || "video",
+        // Ensure meetingStatus and meetingLink are preserved
+        meetingStatus: apt.meetingStatus || (apt.appointmentType === "video" ? "waiting" : undefined),
+        meetingLink: apt.meetingLink,
       }))
       .sort((a, b) => {
         const dateA = new Date(`${a.date} ${a.time}`);
@@ -90,34 +153,91 @@ const PatientDashboard = () => {
     [userAppointments]
   );
 
+  // Format date helper - must be defined before useMemo that uses it
+  const formatDate = useCallback((dateString) => {
+    if (!dateString) return "N/A";
+    try {
+      // Handle Firestore Timestamp objects
+      const date = dateString.toDate ? dateString.toDate() : new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch (error) {
+      return dateString;
+    }
+  }, []);
+
   // Filter orders for current user
   const recentOrders = useMemo(() => {
     if (!currentUser) return [];
     const patientId = currentUser.email;
     return orders
-      .filter((order) => order.patientId === patientId)
+      .filter((order) => {
+        const orderPatientId = order.patientId;
+        return orderPatientId === patientId || 
+               String(orderPatientId).toLowerCase() === String(patientId).toLowerCase();
+      })
       .map((order) => ({
         id: order.id,
+        orderId: order.id, // Use id as orderId for display
         items: order.items || [],
-        totalPrice: order.total || 0,
-        status: order.status || "Processing",
-        date: order.date || new Date().toISOString(),
+        totalPrice: order.total || order.totalPrice || 0,
+        status: order.status || "pending",
+        date: formatDate(order.date),
+        rawDate: order.date, // Keep raw date for sorting
+        pharmacyId: order.pharmacyId,
+        pharmacyName: order.pharmacyName || order.items?.[0]?.pharmacyName,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
       }))
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 5); // Get latest 5 orders
-  }, [orders, currentUser]);
+      .sort((a, b) => {
+        const dateA = a.rawDate?.toDate ? a.rawDate.toDate().getTime() : a.rawDate ? new Date(a.rawDate).getTime() : 0;
+        const dateB = b.rawDate?.toDate ? b.rawDate.toDate().getTime() : b.rawDate ? new Date(b.rawDate).getTime() : 0;
+        return dateB - dateA; // Descending order
+      })
+      .slice(0, 3); // Get latest 3 orders
+  }, [orders, currentUser, formatDate]);
 
   // Get today's or upcoming appointment for queue tracking
+  // Always get the MOST RECENT ACTIVE appointment (by booking time or date)
+  // Only show appointments that are NOT completed and NOT past their time
   const todayAppointment = useMemo(() => {
     if (!userAppointments || userAppointments.length === 0) return null;
     
+    const now = new Date();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split("T")[0];
     
-    // Find the first appointment from today onwards
-    const upcomingAppointment = userAppointments.find((apt) => {
-      if (!apt.date) return false;
+    // Filter appointments from today onwards that are ACTIVE (not completed)
+    // IMPORTANT: Normalize appointments first to ensure bookingTime exists
+    const normalizedAppointments = userAppointments.map((apt) => {
+      // Ensure bookingTime exists for proper sorting
+      if (!apt.bookingTime) {
+        if (apt.dateCreated?.toDate) {
+          apt.bookingTime = apt.dateCreated.toDate().toISOString();
+        } else if (apt.dateCreated) {
+          apt.bookingTime = typeof apt.dateCreated === 'string' 
+            ? apt.dateCreated 
+            : new Date(apt.dateCreated).toISOString();
+        } else {
+          apt.bookingTime = new Date().toISOString();
+        }
+      }
+      // Ensure queueStatus exists
+      if (!apt.queueStatus) {
+        apt.queueStatus = "waiting";
+      }
+      return apt;
+    });
+    
+    const upcomingAppointments = normalizedAppointments.filter((apt) => {
+      if (!apt.date || !apt.time) return false;
+      
+      // Exclude completed appointments
+      if (apt.queueStatus === "completed") return false;
       
       // Handle different date formats
       let aptDateStr = '';
@@ -134,10 +254,75 @@ const PatientDashboard = () => {
       const todayDate = new Date(todayStr);
       todayDate.setHours(0, 0, 0, 0);
       
-      return appointmentDate >= todayDate;
+      // Check if appointment date is today or future
+      if (appointmentDate < todayDate) return false;
+      
+      // If appointment is today, check if time has passed
+      if (appointmentDate.getTime() === todayDate.getTime()) {
+        try {
+          // Parse appointment time (format: "HH:MM" or "HH:MM AM/PM")
+          const timeStr = apt.time.trim();
+          let appointmentDateTime;
+          
+          if (timeStr.includes('AM') || timeStr.includes('PM')) {
+            // 12-hour format
+            appointmentDateTime = new Date(`${aptDateStr} ${timeStr}`);
+          } else {
+            // 24-hour format (HH:MM)
+            const [hours, minutes] = timeStr.split(':');
+            appointmentDateTime = new Date(aptDateStr);
+            appointmentDateTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+          }
+          
+          // Add 1 hour buffer (appointment can be shown for 1 hour after its time)
+          const appointmentEndTime = new Date(appointmentDateTime.getTime() + 60 * 60 * 1000);
+          
+          // Only show if appointment hasn't ended yet (with 1 hour buffer)
+          if (now > appointmentEndTime) {
+            // If appointment is past and completed, don't show
+            // If appointment is past but not completed, still don't show (it's effectively done)
+            return false;
+          }
+        } catch (error) {
+          // If time parsing fails, include it anyway (better to show than hide)
+          console.warn("Error parsing appointment time:", apt.time, error);
+        }
+      }
+      
+      return true;
     });
     
-    return upcomingAppointment || null;
+    if (upcomingAppointments.length === 0) return null;
+    
+    // Sort by booking time (MOST RECENT booking first - latest booking gets priority)
+    // This ensures that if you book a new appointment, it will be shown
+    const sortedAppointments = upcomingAppointments.sort((a, b) => {
+      // First, try to sort by bookingTime (most recent booking first)
+      const aBookingTime = a.bookingTime ? new Date(a.bookingTime).getTime() : 0;
+      const bBookingTime = b.bookingTime ? new Date(b.bookingTime).getTime() : 0;
+      
+      if (aBookingTime !== bBookingTime) {
+        return bBookingTime - aBookingTime; // Most recent booking first
+      }
+      
+      // If no bookingTime, sort by dateCreated
+      const aDateCreated = a.dateCreated?.toDate ? a.dateCreated.toDate().getTime() : 
+                           a.dateCreated ? new Date(a.dateCreated).getTime() : 0;
+      const bDateCreated = b.dateCreated?.toDate ? b.dateCreated.toDate().getTime() : 
+                           b.dateCreated ? new Date(b.dateCreated).getTime() : 0;
+      
+      if (aDateCreated !== bDateCreated) {
+        return bDateCreated - aDateCreated; // Most recent first
+      }
+      
+      // Finally, sort by date and time (earliest appointment first)
+      const aDateTime = new Date(`${a.date} ${a.time}`).getTime();
+      const bDateTime = new Date(`${b.date} ${b.time}`).getTime();
+      return aDateTime - bDateTime; // Earliest appointment first (if same booking time)
+    });
+    
+    // Return the most recent ACTIVE appointment (by booking time)
+    return sortedAppointments[0] || null;
   }, [userAppointments]);
 
   // Filter prescriptions for current user
@@ -162,20 +347,6 @@ const PatientDashboard = () => {
 
   const getStatusColor = useCallback((status) => {
     return STATUS_COLORS[status] || STATUS_COLORS.default;
-  }, []);
-
-  const formatDate = useCallback((dateString) => {
-    if (!dateString) return "N/A";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
   }, []);
 
   return (
@@ -215,6 +386,7 @@ const PatientDashboard = () => {
             variant="contained"
             startIcon={<AddIcon />}
             fullWidth={isMobile}
+            onClick={() => navigate("/finddoctor")}
             sx={{
               backgroundColor: "#1E88E5",
               color: "white",
@@ -343,7 +515,7 @@ const PatientDashboard = () => {
                       >
                         <Box
                           component="img"
-                          src={doctorImage}
+                          src={appointment.doctorAvatar || appointment.doctorImage || doctorImage}
                           alt={appointment.doctorName}
                           sx={{
                             width: "100%",
@@ -409,7 +581,10 @@ const PatientDashboard = () => {
                             fontSize: { xs: "0.875rem", sm: "0.9375rem" },
                           }}
                         >
-                          {appointment.consultationType || `${appointment.specialty} Consultation`}
+                          {appointment.consultationType || 
+                           (appointment.doctorSpecialty || appointment.specialty 
+                             ? `${appointment.doctorSpecialty || appointment.specialty} Consultation`
+                             : "Video Consultation")}
                         </Typography>
 
                         {/* Queue Information */}
@@ -455,27 +630,98 @@ const PatientDashboard = () => {
                           </Box>
                         )}
 
-                        {/* Join Call Button */}
-                        <Button
-                          variant="contained"
-                          fullWidth
-                          startIcon={<VideocamIcon />}
-                          sx={{
-                            backgroundColor: "#1E88E5",
-                            color: "white",
-                            textTransform: "none",
-                            fontWeight: 600,
-                            py: { xs: 1.25, sm: 1.5 },
-                            borderRadius: 2,
-                            fontSize: { xs: "0.875rem", sm: "0.9375rem" },
-                            mt: "auto",
-                            "&:hover": {
-                              backgroundColor: "#005CB2",
-                            },
-                          }}
-                        >
-                          Join Call
-                        </Button>
+                        {/* Join Call Button - Only show when meeting is started */}
+                        {appointment.meetingStatus === "started" && appointment.meetingLink ? (
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            startIcon={<VideocamIcon />}
+                            onClick={async () => {
+                              try {
+                                // Update meeting status to joined in Firebase
+                                if (appointment.id) {
+                                  await FirestoreService.updateAppointment(appointment.id, {
+                                    meetingStatus: "joined",
+                                    meetingJoinedAt: new Date().toISOString(),
+                                  });
+                                }
+
+                                // Update meeting status to joined in localStorage
+                                const appointments = JSON.parse(localStorage.getItem("Appointments") || "[]");
+                                const aptIndex = appointments.findIndex(apt => apt.id === appointment.id);
+                                if (aptIndex !== -1) {
+                                  appointments[aptIndex].meetingStatus = "joined";
+                                  appointments[aptIndex].meetingJoinedAt = new Date().toISOString();
+                                  localStorage.setItem("Appointments", JSON.stringify(appointments));
+                                  window.dispatchEvent(new Event("storage"));
+                                }
+
+                                // Create notification for doctor
+                                const doctorNotification = {
+                                  type: "meeting",
+                                  title: "انضم المريض للميتنج",
+                                  message: `${currentUser?.patientProfile?.fullName || currentUser?.name || "المريض"} انضم للميتنج`,
+                                  doctorId: appointment.doctorId,
+                                  appointmentId: appointment.id,
+                                  read: false,
+                                };
+
+                                // Save notification to Firebase
+                                await FirestoreService.addNotification(doctorNotification);
+
+                                // Also save to localStorage
+                                const notifications = JSON.parse(localStorage.getItem("Notifications") || "[]");
+                                notifications.push({
+                                  ...doctorNotification,
+                                  id: Date.now() + Math.random(),
+                                  date: new Date().toISOString(),
+                                });
+                                localStorage.setItem("Notifications", JSON.stringify(notifications));
+                                window.dispatchEvent(new CustomEvent("notificationAdded", { detail: doctorNotification }));
+
+                                // Open meeting link
+                                window.open(appointment.meetingLink, "_blank");
+                              } catch (error) {
+                                // If update fails, still open the meeting link
+                                window.open(appointment.meetingLink, "_blank");
+                              }
+                            }}
+                            sx={{
+                              backgroundColor: "#4CAF50",
+                              color: "white",
+                              textTransform: "none",
+                              fontWeight: 600,
+                              py: { xs: 1.25, sm: 1.5 },
+                              borderRadius: 2,
+                              fontSize: { xs: "0.875rem", sm: "0.9375rem" },
+                              mt: "auto",
+                              "&:hover": {
+                                backgroundColor: "#45A049",
+                              },
+                            }}
+                          >
+                            انضم للميتنج
+                          </Button>
+                        ) : appointment.meetingStatus === "waiting" ? (
+                          <Button
+                            variant="outlined"
+                            fullWidth
+                            disabled
+                            startIcon={<VideocamIcon />}
+                            sx={{
+                              textTransform: "none",
+                              fontWeight: 600,
+                              py: { xs: 1.25, sm: 1.5 },
+                              borderRadius: 2,
+                              fontSize: { xs: "0.875rem", sm: "0.9375rem" },
+                              mt: "auto",
+                              borderColor: "#E0E0E0",
+                              color: "#757575",
+                            }}
+                          >
+                            في انتظار بدء الميتنج
+                          </Button>
+                        ) : null}
                       </CardContent>
                     </Card>
                   </Grid>
@@ -507,105 +753,129 @@ const PatientDashboard = () => {
                         borderRadius: 3,
                         boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
                         transition: "transform 0.2s, box-shadow 0.2s",
+                        overflow: "hidden",
+                        backgroundColor: "white",
                         width: "100%",
                         display: "flex",
                         flexDirection: "column",
-                        minHeight: { xs: "auto", sm: 480 },
                         "&:hover": {
                           transform: { xs: "none", sm: "translateY(-4px)" },
                           boxShadow: { xs: "0 2px 10px rgba(0,0,0,0.05)", sm: "0 4px 20px rgba(0,0,0,0.1)" },
                         },
                       }}
                     >
-                      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+                      {/* Doctor Image */}
+                      <Box
+                        sx={{
+                          width: "100%",
+                          height: { xs: 180, sm: 200 },
+                          backgroundColor: "#F5F5F5",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src={appointment.doctorAvatar || appointment.doctorImage || doctorImage}
+                          alt={appointment.doctorName}
+                          sx={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      </Box>
+
+                      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, display: "flex", flexDirection: "column" }}>
+                        {/* Date and Status */}
                         <Box
                           sx={{
                             display: "flex",
-                            flexDirection: "column",
+                            justifyContent: "space-between",
                             alignItems: "center",
-                            textAlign: "center",
-                            flexGrow: 1,
-                            justifyContent: "center",
+                            mb: 1.5,
                           }}
                         >
-                          <Avatar
-                            src={doctorImage}
-                            alt={appointment.doctorName}
-                            sx={{
-                              width: { xs: 100, sm: 120 },
-                              height: { xs: 100, sm: 120 },
-                              mb: { xs: 1.5, sm: 2 },
-                              border: "3px solid #E3F2FD",
-                            }}
-                          />
-                          <Typography
-                            variant="subtitle1"
-                            sx={{
-                              fontWeight: 600,
-                              mb: 0.5,
-                              color: "#1C1C1C",
-                            }}
-                          >
-                            {appointment.doctorName}
-                          </Typography>
                           <Typography
                             variant="body2"
                             sx={{
-                              color: "#555555",
-                              mb: 1.5,
+                              color: "#757575",
+                              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                              fontWeight: 500,
                             }}
                           >
-                            {appointment.specialty}
+                            {appointment.date} at {appointment.time}
                           </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                              mb: 0.5,
-                              justifyContent: "center",
-                            }}
-                          >
-                            <CalendarTodayIcon
-                              sx={{ fontSize: 16, color: "#555555" }}
-                            />
-                            <Typography variant="caption" color="text.secondary">
-                              {appointment.date}
-                            </Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                              mb: 2,
-                              justifyContent: "center",
-                            }}
-                          >
-                            <AccessTimeIcon
-                              sx={{ fontSize: 16, color: "#555555" }}
-                            />
-                            <Typography variant="caption" color="text.secondary">
-                              {appointment.time}
-                            </Typography>
-                          </Box>
-                          <Button
-                            variant="outlined"
+                          <Chip
+                            label={appointment.status}
                             size="small"
                             sx={{
-                              textTransform: "none",
-                              borderColor: "#E0E0E0",
-                              color: "#555555",
-                              mt: "auto",
-                              "&:hover": {
-                                borderColor: "#1E88E5",
-                                backgroundColor: "#E3F2FD",
-                              },
+                              backgroundColor: "#1E88E5",
+                              color: "white",
+                              fontWeight: 600,
+                              fontSize: { xs: "0.7rem", sm: "0.75rem" },
+                              height: { xs: 22, sm: 24 },
+                              borderRadius: 2,
                             }}
-                          >
-                            View Details
-                          </Button>
+                          />
                         </Box>
+
+                        {/* Doctor Name */}
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: "bold",
+                            mb: 0.5,
+                            color: "#1C1C1C",
+                            fontSize: { xs: "1rem", sm: "1.125rem" },
+                          }}
+                        >
+                          {appointment.doctorName}
+                        </Typography>
+
+                        {/* Consultation Type */}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#757575",
+                            mb: 2,
+                            fontSize: { xs: "0.875rem", sm: "0.9375rem" },
+                          }}
+                        >
+                          {appointment.consultationType || 
+                           (appointment.doctorSpecialty || appointment.specialty 
+                             ? `${appointment.doctorSpecialty || appointment.specialty} Consultation`
+                             : "Video Consultation")}
+                        </Typography>
+
+                        {/* View Details Button */}
+                        <Button
+                          variant="outlined"
+                          fullWidth
+                          onClick={() => {
+                            // Navigate to doctor profile page
+                            const doctorId = appointment.doctorId || appointment.doctorEmail;
+                            if (doctorId) {
+                              navigate(`/doctor/${doctorId}`);
+                            }
+                          }}
+                          sx={{
+                            textTransform: "none",
+                            borderColor: "#E0E0E0",
+                            color: "#555555",
+                            py: { xs: 1.25, sm: 1.5 },
+                            borderRadius: 2,
+                            fontSize: { xs: "0.875rem", sm: "0.9375rem" },
+                            "&:hover": {
+                              borderColor: "#1E88E5",
+                              backgroundColor: "#E3F2FD",
+                            },
+                          }}
+                        >
+                          View Details
+                        </Button>
                       </CardContent>
                     </Card>
                   </Grid>
@@ -908,6 +1178,7 @@ const PatientDashboard = () => {
                       <Button
                         variant="text"
                         size="small"
+                        onClick={() => navigate("/orders")}
                         sx={{
                           textTransform: "none",
                           color: "#1E88E5",
@@ -973,6 +1244,7 @@ const PatientDashboard = () => {
                         <Button
                           variant="text"
                           size="small"
+                          onClick={() => navigate("/orders")}
                           sx={{
                             textTransform: "none",
                             color: "#1E88E5",
@@ -995,6 +1267,22 @@ const PatientDashboard = () => {
         </Grid>
         </Grid>
       </Container>
+
+      {/* Success Snackbar */}
+      <Snackbar
+        open={successSnackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSuccessSnackbar({ ...successSnackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert 
+          onClose={() => setSuccessSnackbar({ ...successSnackbar, open: false })} 
+          severity="success" 
+          sx={{ width: "100%" }}
+        >
+          {successSnackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
