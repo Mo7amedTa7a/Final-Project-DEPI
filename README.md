@@ -382,8 +382,6 @@ VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id_here
 2. اضغط **Get Started**
 3. فعّل **Email/Password** provider
 
->  **للمزيد من التفاصيل**: راجع ملف `FIREBASE_SETUP.md`
-
 #### 4. التحقق من الإعداد
 ```bash
 # التحقق من تثبيت المكتبات
