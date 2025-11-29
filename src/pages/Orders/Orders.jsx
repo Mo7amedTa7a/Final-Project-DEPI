@@ -194,16 +194,13 @@ const Orders = () => {
     const statusLower = String(status || "").toLowerCase();
     switch (statusLower) {
       case "pending":
-      case "معلق":
+      case "pending":
         return "Pending";
       case "shipped":
-      case "تم الشحن":
         return "Shipped";
       case "delivered":
-      case "تم التوصيل":
         return "Delivered";
       case "completed":
-      case "مكتمل":
         return "Completed";
       default:
         return status || "Pending";
@@ -214,16 +211,13 @@ const Orders = () => {
     const statusLower = String(status || "").toLowerCase();
     switch (statusLower) {
       case "pending":
-      case "معلق":
+      case "pending":
         return "warning";
       case "shipped":
-      case "تم الشحن":
         return "info";
       case "delivered":
-      case "تم التوصيل":
         return "info";
       case "completed":
-      case "مكتمل":
         return "success";
       default:
         return "default";
@@ -234,16 +228,13 @@ const Orders = () => {
     const statusLower = String(status || "").toLowerCase();
     switch (statusLower) {
       case "pending":
-      case "معلق":
+      case "pending":
         return "#fff3e0";
       case "shipped":
-      case "تم الشحن":
         return "#e1f5fe";
       case "delivered":
-      case "تم التوصيل":
         return "#e3f2fd";
       case "completed":
-      case "مكتمل":
         return "#e8f5e9";
       default:
         return "#f5f5f5";
@@ -254,16 +245,13 @@ const Orders = () => {
     const statusLower = String(status || "").toLowerCase();
     switch (statusLower) {
       case "pending":
-      case "معلق":
+      case "pending":
         return "#ef6c00";
       case "shipped":
-      case "تم الشحن":
         return "#0277bd";
       case "delivered":
-      case "تم التوصيل":
         return "#1565c0";
       case "completed":
-      case "مكتمل":
         return "#2e7d32";
       default:
         return "#424242";

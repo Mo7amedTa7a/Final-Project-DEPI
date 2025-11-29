@@ -314,7 +314,7 @@ const Checkout = () => {
         });
         
         if (isDuplicate) {
-          setBookingError("هذا الموعد محجوز بالفعل. يرجى اختيار موعد آخر.");
+          setBookingError("This time slot is already booked. Please choose another time.");
           setIsProcessing(false);
           return;
         }

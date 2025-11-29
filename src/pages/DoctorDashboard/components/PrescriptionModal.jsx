@@ -95,7 +95,7 @@ const PrescriptionModal = ({ open, onClose, patientData }) => {
       setShowConfirmation(true);
     } catch (error) {
       // Error is already handled in savePrescription, but we can add user feedback here if needed
-      setErrors({ general: "حدث خطأ أثناء حفظ الروشته. تم الحفظ في التخزين المحلي فقط." });
+      setErrors({ general: "An error occurred while saving the prescription. Saved to local storage only." });
     }
   };
 

@@ -42,14 +42,14 @@ export default function Signup() {
     }
 
     try {
-      // التحقق من وجود حساب بنفس البريد الإلكتروني في Firebase
+      // Check if account with same email exists in Firebase
       const existingUser = await FirestoreService.getUserByEmail(formData.email);
       if (existingUser) {
-        setError("هذا الحساب موجود بالفعل. يرجى تسجيل الدخول بدلاً من ذلك.");
+        setError("This account already exists. Please login instead.");
         return;
       }
 
-      // إنشاء حساب جديد في Firebase
+      // Create new account in Firebase
       const newUser = {
         name: formData.name,
         email: formData.email,
@@ -57,16 +57,16 @@ export default function Signup() {
         role: formData.role
       };
       
-      // حفظ المستخدم في Firebase
+      // Save user in Firebase
       await FirestoreService.addUser(newUser);
       
-      // حفظ المستخدم الحالي في localStorage (للسهولة)
+      // Save current user in localStorage (for convenience)
       localStorage.setItem("CurrentUser", JSON.stringify(newUser));
       
       setSuccessToast(true);
       setError("");
       
-      // توجيه المستخدم حسب الـ role
+      // Navigate user based on role
       setTimeout(() => {
         if (newUser.role === "Patient") {
           navigate("/patient-profile-setup");
@@ -81,7 +81,7 @@ export default function Signup() {
       }, 2000);
     } catch (error) {
       console.error("Error signing up:", error);
-      setError("حدث خطأ أثناء التسجيل. يرجى المحاولة مرة أخرى.");
+      setError("An error occurred during registration. Please try again.");
     }
   };
 
@@ -300,7 +300,7 @@ export default function Signup() {
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert onClose={() => setSuccessToast(false)} severity="success" sx={{ width: "100%" }}>
-              تم إنشاء الحساب بنجاح!
+              Account created successfully!
             </Alert>
           </Snackbar>
 

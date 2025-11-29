@@ -406,7 +406,7 @@ const PatientDashboard = () => {
         </Box>
 
         <Grid container spacing={{ xs: 2, sm: 3 }} sx={{ justifyContent: "center" }}>
-        {/* Right Column - Live Queue Tracker (يظهر أولاً في الموبايل) */}
+        {/* Right Column - Live Queue Tracker (appears first on mobile) */}
         {currentUser && (
           <Grid 
             size={{ xs: 12, lg: 4 }}
@@ -450,7 +450,7 @@ const PatientDashboard = () => {
                       fontSize: "0.875rem",
                     }}
                   >
-                    لا يوجد موعد اليوم لمتابعة الطابور
+                    No appointment today to track queue
                   </Typography>
                 </CardContent>
               </Card>
@@ -659,8 +659,8 @@ const PatientDashboard = () => {
                                 // Create notification for doctor
                                 const doctorNotification = {
                                   type: "meeting",
-                                  title: "انضم المريض للميتنج",
-                                  message: `${currentUser?.patientProfile?.fullName || currentUser?.name || "المريض"} انضم للميتنج`,
+                                  title: "Patient Joined Meeting",
+                                  message: `${currentUser?.patientProfile?.fullName || currentUser?.name || "Patient"} joined the meeting`,
                                   doctorId: appointment.doctorId,
                                   appointmentId: appointment.id,
                                   read: false,
@@ -700,7 +700,7 @@ const PatientDashboard = () => {
                               },
                             }}
                           >
-                            انضم للميتنج
+                            Join Meeting
                           </Button>
                         ) : appointment.meetingStatus === "waiting" ? (
                           <Button
@@ -719,7 +719,7 @@ const PatientDashboard = () => {
                               color: "#757575",
                             }}
                           >
-                            في انتظار بدء الميتنج
+                            Waiting for meeting to start
                           </Button>
                         ) : null}
                       </CardContent>

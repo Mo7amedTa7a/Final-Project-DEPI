@@ -4,7 +4,7 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
-// إعدادات Firebase - إعدادات مشروعك من Firebase Console
+// Firebase Configuration - Your project settings from Firebase Console
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBCIwsSjPNW72yKMqPf9rkM5lvz10GzwdE",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "cutetap-ce6ae.firebaseapp.com",
@@ -15,16 +15,16 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-0W1QRQDFB4"
 };
 
-// تهيئة Firebase
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// تهيئة Firestore
+// Initialize Firestore
 export const db = getFirestore(app);
 
-// تهيئة Authentication
+// Initialize Authentication
 export const auth = getAuth(app);
 
-// تهيئة Analytics (فقط في بيئة الإنتاج)
+// Initialize Analytics (only in production environment)
 let analytics = null;
 if (typeof window !== "undefined" && import.meta.env.PROD) {
   try {

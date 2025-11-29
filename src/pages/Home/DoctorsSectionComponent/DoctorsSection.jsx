@@ -54,7 +54,51 @@ const DoctorsSection = ({ searchTerm, searchType, specialtyFilter, governorateFi
       });
     }
 
-    return doctors;
+    // Sort by rating (highest first), then by number of reviews
+    const sortedDoctors = [...doctors].sort((a, b) => {
+      const ratingA = a.rating || 0;
+      const ratingB = b.rating || 0;
+      if (ratingB !== ratingA) {
+        return ratingB - ratingA; // Higher rating first
+      }
+      // If same rating, sort by number of reviews
+      const reviewsA = Array.isArray(a.reviews) ? a.reviews.length : (a.reviewCount || 0);
+      const reviewsB = Array.isArray(b.reviews) ? b.reviews.length : (b.reviewCount || 0);
+      return reviewsB - reviewsA; // Higher review count first
+    });
+
+    // If showing top-rated only (no search/filters), limit to top 6
+    const isShowingTopRated = !searchTerm && 
+                               specialtyFilter === "All" && 
+                               governorateFilter === "All" && 
+                               (searchType === "All" || searchType === undefined);
+    
+    if (isShowingTopRated) {
+      // Get top 6, but if there are ties in rating and review count, include all tied items
+      if (sortedDoctors.length <= 6) {
+        return sortedDoctors;
+      }
+      
+      // Get the 6th item's rating and review count
+      const sixthItem = sortedDoctors[5];
+      const sixthRating = sixthItem.rating || 0;
+      const sixthReviews = Array.isArray(sixthItem.reviews) ? sixthItem.reviews.length : (sixthItem.reviewCount || 0);
+      
+      // Include all items that have the same rating and review count as the 6th item
+      const topDoctors = sortedDoctors.filter((doctor, index) => {
+        if (index < 6) return true; // Always include first 6
+        
+        const doctorRating = doctor.rating || 0;
+        const doctorReviews = Array.isArray(doctor.reviews) ? doctor.reviews.length : (doctor.reviewCount || 0);
+        
+        // Include if rating and review count match the 6th item
+        return doctorRating === sixthRating && doctorReviews === sixthReviews;
+      });
+      
+      return topDoctors;
+    }
+
+    return sortedDoctors;
   }, [allDoctors, searchTerm, searchType, specialtyFilter, governorateFilter]);
 
   const doctors = filteredDoctors;

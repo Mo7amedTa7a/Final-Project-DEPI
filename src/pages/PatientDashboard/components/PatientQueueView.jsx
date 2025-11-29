@@ -238,7 +238,7 @@ const PatientQueueView = ({ patientId, doctorId }) => {
       >
         <CardContent sx={{ p: 3, textAlign: "center" }}>
           <Typography variant="body1" sx={{ color: "#757575" }}>
-            لا يوجد موعد في الطابور اليوم
+            No appointment in queue today
           </Typography>
         </CardContent>
       </Card>
@@ -267,10 +267,10 @@ const PatientQueueView = ({ patientId, doctorId }) => {
                 fontSize: { xs: "1.1rem", md: "1.25rem" },
               }}
             >
-              موضعك في الطابور
+              Your Queue Position
             </Typography>
             <Typography variant="body2" sx={{ color: "#757575" }}>
-              مع د. {appointment.doctorName}
+              With Dr. {appointment.doctorName}
             </Typography>
           </Box>
         </Box>
@@ -283,10 +283,10 @@ const PatientQueueView = ({ patientId, doctorId }) => {
             sx={{ mb: 3, backgroundColor: "#E8F5E9", color: "#2E7D32" }}
           >
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-              دورك الآن!
+              Your Turn Now!
             </Typography>
             <Typography variant="body2">
-              الدكتور يستقبلك الآن
+              The doctor is receiving you now
             </Typography>
           </Alert>
         )}
@@ -318,15 +318,15 @@ const PatientQueueView = ({ patientId, doctorId }) => {
                 variant="h6"
                 sx={{ fontWeight: 600, color: "#1C1C1C", mb: 0.5 }}
               >
-                رقمك في الطابور
+                Your Queue Number
               </Typography>
               <Typography variant="body2" sx={{ color: "#757575", mb: 1 }}>
                 {patientsAhead === 0
-                  ? "أنت التالي!"
-                  : `يوجد ${patientsAhead} ${patientsAhead === 1 ? "مريض" : "مرضى"} قبلك`}
+                  ? "You're Next!"
+                  : `There are ${patientsAhead} ${patientsAhead === 1 ? "patient" : "patients"} ahead of you`}
               </Typography>
               <Typography variant="body2" sx={{ color: "#757575", fontWeight: 500 }}>
-                إجمالي في الطابور: {totalInQueue} {totalInQueue === 1 ? "مريض" : "مرضى"}
+                Total in Queue: {totalInQueue} {totalInQueue === 1 ? "patient" : "patients"}
               </Typography>
             </Box>
 
@@ -349,13 +349,13 @@ const PatientQueueView = ({ patientId, doctorId }) => {
                     variant="subtitle1"
                     sx={{ fontWeight: 600, color: "#1C1C1C" }}
                   >
-                    الوقت المتوقع للانتظار
+                    Estimated Wait Time
                   </Typography>
                   <Typography
                     variant="h5"
                     sx={{ fontWeight: 700, color: "#F57C00" }}
                   >
-                    ~{estimatedWaitTime} دقيقة
+                    ~{estimatedWaitTime} minutes
                   </Typography>
                 </Box>
               </Box>
@@ -371,7 +371,7 @@ const PatientQueueView = ({ patientId, doctorId }) => {
                 }}
               >
                 <Typography variant="body2" sx={{ color: "#757575" }}>
-                  التقدم في الطابور
+                  Queue Progress
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600 }}>
                   {queuePosition} / {totalInQueue}
@@ -400,10 +400,10 @@ const PatientQueueView = ({ patientId, doctorId }) => {
             sx={{ mb: 3 }}
           >
             <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
-              تم إكمال الموعد
+              Appointment Completed
             </Typography>
             <Typography variant="body2">
-              شكراً لك على استخدام خدماتنا
+              Thank you for using our services
             </Typography>
           </Alert>
         )}
@@ -442,8 +442,8 @@ const PatientQueueView = ({ patientId, doctorId }) => {
             <Chip
               label={
                 appointment.appointmentType === "video"
-                  ? "مكالمة فيديو"
-                  : "زيارة عيادة"
+                  ? "Video Call"
+                  : "Clinic Visit"
               }
               size="small"
               color="primary"

@@ -29,16 +29,16 @@ export default function Login() {
     }
 
     try {
-      // البحث عن المستخدم في Firebase بالبريد الإلكتروني
+      // Search for user in Firebase by email
       const user = await FirestoreService.getUserByEmail(formData.email);
 
       if (user && user.password === formData.password) {
-        // تسجيل الدخول ناجح - حفظ المستخدم الحالي في localStorage (للسهولة)
+        // Login successful - save current user in localStorage (for convenience)
         localStorage.setItem("CurrentUser", JSON.stringify(user));
         setSuccessToast(true);
         setError("");
         
-        // توجيه المستخدم حسب الـ role واكتمال الملف الشخصي
+        // Navigate user based on role and profile completion
         setTimeout(() => {
           if (user.role === "Patient" && !user.patientProfile) {
             navigate("/patient-profile-setup");
@@ -52,11 +52,11 @@ export default function Login() {
           }
         }, 1500);
       } else {
-        setError("البريد الإلكتروني أو كلمة المرور غير صحيحة");
+        setError("Email or password is incorrect");
       }
     } catch (error) {
       console.error("Error logging in:", error);
-      setError("حدث خطأ أثناء تسجيل الدخول. يرجى المحاولة مرة أخرى.");
+      setError("An error occurred during login. Please try again.");
     }
   };
 
@@ -195,7 +195,7 @@ export default function Login() {
             anchorOrigin={{ vertical: "top", horizontal: "center" }}
           >
             <Alert onClose={() => setSuccessToast(false)} severity="success" sx={{ width: "100%" }}>
-              تم تسجيل الدخول بنجاح!
+              Logged in successfully!
             </Alert>
           </Snackbar>
 

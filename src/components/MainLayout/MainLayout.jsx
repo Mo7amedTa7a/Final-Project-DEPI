@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Box, CssBaseline, useMediaQuery, useTheme } from "@mui/material";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
-import { Outlet, useLocation } from "react-router"; // في حال استخدمت React Router
+import { Outlet, useLocation } from "react-router";
 import Sidebar from "../SideBar/SideBar";
 
 const drawerWidth = 240;
@@ -10,13 +10,13 @@ const drawerWidth = 240;
 export default function MainLayout() {
   const theme = useTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
-  const [open, setOpen] = useState(false); // يبدأ مغلق افتراضياً
+  const [open, setOpen] = useState(false); // Starts closed by default
   const location = useLocation();
 
   const handleDrawerToggle = () => setOpen(!open);
   const handleDrawerClose = () => setOpen(false);
 
-  // إغلاق الـ sidebar تلقائياً عند تغيير الصفحة
+  // Close sidebar automatically when page changes
   useEffect(() => {
     setOpen(false);
   }, [location.pathname]);
@@ -41,7 +41,7 @@ export default function MainLayout() {
             }),
           }}
         >
-          {/* المحتوى المتغير */}
+          {/* Dynamic Content */}
           <Outlet />
         </Box>
       </Box>

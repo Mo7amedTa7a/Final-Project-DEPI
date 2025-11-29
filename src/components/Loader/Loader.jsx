@@ -18,8 +18,8 @@ const Loader = () => {
                 flexDirection: 'column',
                 justifyContent: 'center',
                 alignItems: 'center',
-                backgroundColor: theme.palette.background.default, // خلفية شفافة
-                zIndex: 1400, // تأكد من أن الـ loader يظهر فوق كل شيء
+                backgroundColor: theme.palette.background.default, // Transparent background
+                zIndex: 1400, // Ensure loader appears above everything
             }}
         >
             <img src={Logo} alt="Logo" style={{ height: '80px', marginBottom: '16px' }} />

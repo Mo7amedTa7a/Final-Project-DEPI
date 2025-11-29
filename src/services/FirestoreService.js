@@ -95,7 +95,7 @@ class FirestoreService {
           callback(data);
         },
         (error) => {
-          console.error(`خطأ في الاستماع لتغييرات ${collectionName}:`, error);
+          console.error(`Error listening to changes in ${collectionName}:`, error);
           callback([]);
         }
       );
@@ -117,7 +117,7 @@ class FirestoreService {
         }
       };
     } catch (error) {
-      console.error(`خطأ في الاشتراك بـ ${collectionName}:`, error);
+      console.error(`Error subscribing to ${collectionName}:`, error);
       return () => {};
     }
   }
@@ -900,7 +900,7 @@ class FirestoreService {
       const docRef = await addDoc(collection(db, "users"), user);
       const savedUser = { id: docRef.id, ...userData };
       
-      // إذا كان المستخدم صيدلية، أضفه في collection "pharmacies"
+      // If user is a pharmacy, add it to "pharmacies" collection
       if (userData.role === "Pharmacy") {
         try {
           const pharmacyData = {
@@ -919,7 +919,7 @@ class FirestoreService {
         }
       }
       
-      // إذا كان المستخدم طبيب، أضفه في collection "doctors"
+      // If user is a doctor, add it to "doctors" collection
       if (userData.role === "Doctor") {
         try {
           const doctorData = {
@@ -968,13 +968,18 @@ class FirestoreService {
         throw new Error("User not found");
       }
       
+      // Remove undefined values to avoid Firebase errors
+      const cleanUpdates = Object.fromEntries(
+        Object.entries(updates).filter(([_, value]) => value !== undefined)
+      );
+      
       const userRef = doc(db, "users", user.id);
       await updateDoc(userRef, {
-        ...updates,
+        ...cleanUpdates,
         updatedAt: serverTimestamp(),
       });
       
-      const updated = { ...user, ...updates };
+      const updated = { ...user, ...cleanUpdates };
       
       // If doctor profile is updated, also add/update in doctors collection
       if (updated.doctorProfile) {

@@ -61,8 +61,8 @@ const PharmacyProfile = () => {
   const { getPharmacyById, isLoading } = usePharmacies();
 
   // ============= Memoized Values =============
-  // استخراج القيم الثابتة من pharmacy object لتجنب تغيير reference
-  // تحويل إلى string لضمان primitive comparison في dependency array
+  // Extract constant values from pharmacy object to avoid reference changes
+  // Convert to string to ensure primitive comparison in dependency array
   const pharmacyIdString = pharmacy?.id ? String(pharmacy.id) : null;
   const pharmacyNameString = pharmacy?.name ? String(pharmacy.name) : "";
   

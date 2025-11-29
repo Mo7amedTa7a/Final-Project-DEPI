@@ -29,6 +29,8 @@ const OrdersLazy = React.lazy(() => import('../pages/Orders/Orders'));
 const VideoCallLazy = React.lazy(() => import('../pages/VideoCall/VideoCall'));
 const NotificationsLazy = React.lazy(() => import('../pages/Notifications/Notifications'));
 const NotFoundLazy = React.lazy(() => import('../pages/NotFound/NotFound'));
+const AboutUsLazy = React.lazy(() => import('../pages/AboutUs/AboutUs'));
+const ContactUsLazy = React.lazy(() => import('../pages/ContactUs/ContactUs'));
 
 
 export const Routes = createBrowserRouter([
@@ -195,6 +197,22 @@ export const Routes = createBrowserRouter([
                     <WalletLazy />
                   </Suspense>
                 </ProtectedRoute>
+              ),
+            },
+            {
+              path: "about-us",
+              Component: () => (
+                <Suspense fallback={<Loader />}>
+                  <AboutUsLazy />
+                </Suspense>
+              ),
+            },
+            {
+              path: "contact-us",
+              Component: () => (
+                <Suspense fallback={<Loader />}>
+                  <ContactUsLazy />
+                </Suspense>
               ),
             },
             {

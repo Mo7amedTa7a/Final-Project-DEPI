@@ -54,7 +54,7 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
       });
     }
 
-    // Sort by rating (highest first) and limit to top 10 for top-rated section
+    // Sort by rating (highest first), then by number of reviews
     const sortedPharmacies = [...pharmacies].sort((a, b) => {
       const ratingA = a.rating || 0;
       const ratingB = b.rating || 0;
@@ -64,12 +64,33 @@ const PharmaciesSection = ({ searchTerm, searchType, governorateFilter }) => {
       // If same rating, sort by number of reviews
       const reviewsA = Array.isArray(a.reviews) ? a.reviews.length : 0;
       const reviewsB = Array.isArray(b.reviews) ? b.reviews.length : 0;
-      return reviewsB - reviewsA;
+      return reviewsB - reviewsA; // Higher review count first
     });
 
-    // If showing top-rated only, limit to top 10
+    // If showing top-rated only, limit to top 6
     if (!searchTerm && governorateFilter === "All" && searchType === "All") {
-      return sortedPharmacies.slice(0, 10);
+      // Get top 6, but if there are ties in rating and review count, include all tied items
+      if (sortedPharmacies.length <= 6) {
+        return sortedPharmacies;
+      }
+      
+      // Get the 6th item's rating and review count
+      const sixthItem = sortedPharmacies[5];
+      const sixthRating = sixthItem.rating || 0;
+      const sixthReviews = Array.isArray(sixthItem.reviews) ? sixthItem.reviews.length : 0;
+      
+      // Include all items that have the same rating and review count as the 6th item
+      const topPharmacies = sortedPharmacies.filter((pharmacy, index) => {
+        if (index < 6) return true; // Always include first 6
+        
+        const pharmacyRating = pharmacy.rating || 0;
+        const pharmacyReviews = Array.isArray(pharmacy.reviews) ? pharmacy.reviews.length : 0;
+        
+        // Include if rating and review count match the 6th item
+        return pharmacyRating === sixthRating && pharmacyReviews === sixthReviews;
+      });
+      
+      return topPharmacies;
     }
 
     return sortedPharmacies;

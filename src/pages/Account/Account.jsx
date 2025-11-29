@@ -21,6 +21,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import EditIcon from "@mui/icons-material/Edit";
 import { useNavigate, Link } from "react-router";
 import userImage from "../../assets/user.svg";
+import FirestoreService from "../../services/FirestoreService";
 
 const Account = () => {
   const theme = useTheme();
@@ -34,9 +35,10 @@ const Account = () => {
   });
   const [successToast, setSuccessToast] = useState(false);
   const [error, setError] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    // الحصول على بيانات المستخدم من localStorage
+    // Get user data from localStorage
     const currentUser = localStorage.getItem("CurrentUser");
     if (currentUser) {
       try {
@@ -57,54 +59,69 @@ const Account = () => {
     if (error) setError("");
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    // التحقق من الحقول
+    // Validate fields
     if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
       setError("Please fill in all fields");
       return;
     }
 
-    // التحقق من كلمة المرور الحالية
+    // Validate current password
     if (passwordData.currentPassword !== userData.password) {
       setError("Current password is incorrect");
       return;
     }
 
-    // التحقق من تطابق كلمة المرور الجديدة
+    // Validate new password match
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setError("New passwords do not match");
       return;
     }
 
-    // التحقق من أن كلمة المرور الجديدة مختلفة عن القديمة
+    // Validate that new password is different from old password
     if (passwordData.newPassword === passwordData.currentPassword) {
       setError("New password must be different from current password");
       return;
     }
 
-    // تحديث كلمة المرور
-    const users = JSON.parse(localStorage.getItem("Users") || "[]");
-    const updatedUser = { ...userData, password: passwordData.newPassword };
-    
-    // تحديث المستخدم في array المستخدمين
-    const updatedUsers = users.map((user) =>
-      user.email === updatedUser.email ? updatedUser : user
-    );
-    localStorage.setItem("Users", JSON.stringify(updatedUsers));
-    
-    // تحديث المستخدم الحالي
-    localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
-    setUserData(updatedUser);
-    
-    setSuccessToast(true);
+    setIsUpdating(true);
     setError("");
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+
+    try {
+      // Update password in Firebase
+      await FirestoreService.updateUser(userData.email, {
+        password: passwordData.newPassword,
+      });
+
+      // Update password in localStorage
+      const users = JSON.parse(localStorage.getItem("Users") || "[]");
+      const updatedUser = { ...userData, password: passwordData.newPassword };
+      
+      // Update user in users array
+      const updatedUsers = users.map((user) =>
+        user.email === updatedUser.email ? updatedUser : user
+      );
+      localStorage.setItem("Users", JSON.stringify(updatedUsers));
+      
+      // Update current user
+      localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
+      setUserData(updatedUser);
+      
+      setSuccessToast(true);
+      setError("");
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      console.error("Error updating password:", error);
+      setError("Failed to update password. Please try again.");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   if (!userData) {
@@ -833,6 +850,7 @@ const Account = () => {
                         type="submit"
                         variant="contained"
                         fullWidth
+                        disabled={isUpdating}
                         sx={{
                           backgroundColor: "#1E88E5",
                           color: "white",
@@ -844,9 +862,12 @@ const Account = () => {
                           "&:hover": {
                             backgroundColor: "#005CB2",
                           },
+                          "&:disabled": {
+                            backgroundColor: "#90CAF9",
+                          },
                         }}
                       >
-                        Update Password
+                        {isUpdating ? "Updating..." : "Update Password"}
                       </Button>
                     </Grid>
                   </Grid>

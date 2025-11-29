@@ -179,7 +179,7 @@ const PharmacyDashboard = () => {
     const newOrders = pharmacyOrders.filter(
       (order) => {
         const status = String(order.status || "").toLowerCase();
-        return status === "pending" || status === "معلق";
+        return status === "pending";
       }
     ).length;
     
@@ -187,7 +187,7 @@ const PharmacyDashboard = () => {
     const pendingFulfillment = pharmacyOrders.filter(
       (order) => {
         const status = String(order.status || "").toLowerCase();
-        return status === "shipped" || status === "تم الشحن";
+        return status === "shipped";
       }
     ).length;
     
@@ -215,7 +215,7 @@ const PharmacyDashboard = () => {
       }
       
       const status = String(order.status || "").toLowerCase();
-      const isCompleted = status === "completed" || status === "delivered" || status === "مكتمل" || status === "تم التوصيل";
+      const isCompleted = status === "completed" || status === "delivered";
       
       return orderDateStr === todayStr && isCompleted;
     });

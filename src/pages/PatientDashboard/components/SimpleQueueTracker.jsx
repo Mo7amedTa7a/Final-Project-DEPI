@@ -306,7 +306,7 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
                 fontWeight: 500,
               }}
             >
-              في الطابور
+              In Queue
             </Typography>
             <Typography
               variant="h4"
@@ -319,7 +319,7 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
               {totalInQueue}
             </Typography>
             <Typography variant="caption" sx={{ color: "#757575" }}>
-              {totalInQueue === 1 ? "مريض" : "مرضى"}
+              {totalInQueue === 1 ? "patient" : "patients"}
             </Typography>
           </Box>
 
@@ -348,7 +348,7 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
                 fontWeight: 500,
               }}
             >
-              باقي على دورك
+              Remaining Until Your Turn
             </Typography>
             <Typography
               variant="h4"
@@ -358,16 +358,16 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
                 fontSize: { xs: "1.5rem", sm: "2rem" },
               }}
             >
-              {queueStatus === "in-progress" ? "الآن!" : patientsAhead}
+              {queueStatus === "in-progress" ? "Now!" : patientsAhead}
             </Typography>
             <Typography variant="caption" sx={{ color: "#757575" }}>
               {queueStatus === "in-progress" 
-                ? "دورك الآن" 
+                ? "Your Turn Now" 
                 : patientsAhead === 0 
-                ? "أنت التالي" 
+                ? "You're Next" 
                 : patientsAhead === 1 
-                ? "مريض واحد" 
-                : `${patientsAhead} مرضى`}
+                ? "1 patient" 
+                : `${patientsAhead} patients`}
             </Typography>
           </Box>
         </Box>
@@ -399,10 +399,10 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
             }}
           >
             {queueStatus === "in-progress" 
-              ? "دورك الآن!" 
+              ? "Your Turn Now!" 
               : queueStatus === "completed"
-              ? "تم إكمال الموعد"
-              : "رقمك في الطابور"}
+              ? "Appointment Completed"
+              : "Your Queue Number"}
           </Typography>
           <Typography
             variant="h2"
@@ -421,7 +421,7 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
           </Typography>
           {currentlyServing > 0 && queueStatus === "waiting" && (
             <Typography variant="body2" sx={{ color: "#757575" }}>
-              حالياً: {currentlyServing}
+              Currently: {currentlyServing}
             </Typography>
           )}
         </Box>
@@ -451,7 +451,7 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
                   fontSize: { xs: "0.8rem", sm: "0.875rem" },
                 }}
               >
-                الوقت المتوقع للانتظار
+                Estimated Wait Time
               </Typography>
               <Typography
                 variant="h6"
@@ -461,7 +461,7 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
                   fontSize: { xs: "1rem", sm: "1.25rem" },
                 }}
               >
-                ~{estimatedWaitTime} دقيقة
+                ~{estimatedWaitTime} minutes
               </Typography>
             </Box>
           </Box>
@@ -496,8 +496,8 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
             }}
           >
             {patientsAhead === 0 
-              ? "أنت التالي! استعد للموعد" 
-              : `يرجى الاستعداد. سيتم إشعارك عندما يحين دورك`}
+              ? "You're Next! Get ready for your appointment" 
+              : `Please be ready. You will be notified when it's your turn`}
           </Typography>
         )}
         {queueStatus === "in-progress" && (
@@ -511,7 +511,7 @@ const SimpleQueueTracker = ({ patientId, doctorId }) => {
               mt: 2,
             }}
           >
-            🎉 دورك الآن! الدكتور يستقبلك
+            🎉 Your Turn Now! The doctor is receiving you
           </Typography>
         )}
       </CardContent>

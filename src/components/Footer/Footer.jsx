@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Typography, Link, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Typography, Link as MuiLink, useMediaQuery, useTheme } from "@mui/material";
+import { Link } from "react-router";
 
 export default function Footer({ open }) {
   const theme = useTheme();
@@ -38,7 +39,7 @@ export default function Footer({ open }) {
         }),
       }}
     >
-      {/* الروابط اليسار */}
+      {/* Left Links */}
       <Box 
         sx={{ 
           display: "flex", 
@@ -48,8 +49,9 @@ export default function Footer({ open }) {
           textAlign: { xs: "center", sm: "left" },
         }}
       >
-        <Link
-          href="#"
+        <MuiLink
+          component={Link}
+          to="/about-us"
           underline="none"
           color="inherit"
           sx={{ 
@@ -58,9 +60,10 @@ export default function Footer({ open }) {
           }}
         >
           About Us
-        </Link>
-        <Link
-          href="#"
+        </MuiLink>
+        <MuiLink
+          component={Link}
+          to="/contact-us"
           underline="none"
           color="inherit"
           sx={{ 
@@ -69,10 +72,10 @@ export default function Footer({ open }) {
           }}
         >
           Contact Us
-        </Link>
+        </MuiLink>
       </Box>
 
-      {/* حقوق النشر */}
+      {/* Copyright */}
       <Typography
         variant="body2"
         sx={{ 

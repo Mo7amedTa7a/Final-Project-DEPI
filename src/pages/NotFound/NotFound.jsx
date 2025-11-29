@@ -68,7 +68,7 @@ const NotFound = () => {
             fontSize: { xs: "1.5rem", sm: "2rem" },
           }}
         >
-          الصفحة غير موجودة
+          Page Not Found
         </Typography>
 
         {/* Description */}
@@ -82,7 +82,7 @@ const NotFound = () => {
             mx: "auto",
           }}
         >
-          عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها. يرجى التحقق من الرابط والمحاولة مرة أخرى.
+          Sorry, the page you are looking for does not exist or has been moved. Please check the link and try again.
         </Typography>
 
         {/* Buttons */}
@@ -109,7 +109,7 @@ const NotFound = () => {
               fontWeight: 600,
             }}
           >
-            الصفحة الرئيسية
+            Home Page
           </Button>
           <Button
             variant="outlined"
@@ -125,7 +125,7 @@ const NotFound = () => {
               fontWeight: 600,
             }}
           >
-            العودة للخلف
+            Go Back
           </Button>
         </Box>
 
@@ -144,7 +144,7 @@ const NotFound = () => {
               mb: 2,
             }}
           >
-            صفحات مفيدة:
+            Useful Pages:
           </Typography>
           <Box
             sx={{
@@ -159,21 +159,21 @@ const NotFound = () => {
               onClick={() => navigate("/finddoctor")}
               sx={{ textTransform: "none" }}
             >
-              البحث عن طبيب
+              Find Doctor
             </Button>
             <Button
               variant="text"
               onClick={() => navigate("/pharmacies")}
               sx={{ textTransform: "none" }}
             >
-              الصيدليات
+              Pharmacies
             </Button>
             <Button
               variant="text"
               onClick={() => navigate("/dashboard")}
               sx={{ textTransform: "none" }}
             >
-              لوحة التحكم
+              Dashboard
             </Button>
           </Box>
         </Box>

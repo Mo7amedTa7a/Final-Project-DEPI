@@ -319,7 +319,7 @@ export default function DoctorProfileSetup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // التحقق من الحقول المطلوبة
+    // Validate required fields
     if (
       !formData.specialty ||
       !formData.experience ||
@@ -335,7 +335,7 @@ export default function DoctorProfileSetup() {
     }
 
     try {
-      // الحصول على بيانات المستخدم الحالي
+      // Get current user data
       const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
       
       if (!currentUser.email) {
@@ -343,12 +343,12 @@ export default function DoctorProfileSetup() {
         return;
       }
 
-      // تصفية العيادات الفارغة (التي لا تحتوي على name أو address)
+      // Filter empty clinics (those without name or address)
       const validClinics = formData.clinics.filter(
         (clinic) => clinic.name && clinic.name.trim() !== "" && clinic.address && clinic.address.trim() !== ""
       );
       
-      // إضافة بيانات الملف الشخصي للطبيب
+      // Add doctor profile data
       const doctorProfile = {
         profilePicture: formData.profilePicture,
         fullName: currentUser.name,
@@ -365,16 +365,16 @@ export default function DoctorProfileSetup() {
         conditionsTreated: formData.conditionsTreated,
         servicesOffered: formData.servicesOffered,
         clinicImages: formData.clinicImages,
-        clinics: validClinics, // حفظ العيادات الصحيحة فقط
+        clinics: validClinics, // Save only valid clinics
         schedule: formData.schedule,
       };
 
-      // تحديث المستخدم في Firebase
+      // Update user in Firebase
       const updatedUser = await FirestoreService.updateUser(currentUser.email, {
         doctorProfile: doctorProfile,
       });
 
-      // تحديث المستخدم الحالي في localStorage
+      // Update current user in localStorage
       localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
     } catch (error) {
       if (error.name === "QuotaExceededError") {
@@ -388,7 +388,7 @@ export default function DoctorProfileSetup() {
     setSuccessToast(true);
     setError("");
 
-    // الانتقال للصفحة الرئيسية بعد الحفظ
+    // Navigate to account page after saving
     setTimeout(() => {
       navigate("/account");
       window.location.reload();
@@ -942,7 +942,7 @@ export default function DoctorProfileSetup() {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
           <Alert onClose={() => setSuccessToast(false)} severity="success" sx={{ width: "100%" }}>
-            تم حفظ الملف الشخصي بنجاح!
+            Profile saved successfully!
           </Alert>
         </Snackbar>
       </Paper>

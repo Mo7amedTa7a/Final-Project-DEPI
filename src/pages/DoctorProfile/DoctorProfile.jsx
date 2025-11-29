@@ -4,11 +4,6 @@ import { useDoctors, useAppointments } from "../../hooks/useData";
 import FirestoreService from "../../services/FirestoreService";
 import {
   availableSlots,
-  mockClinics,
-  clinicImages,
-  symptoms,
-  services,
-  initialReviews,
 } from "../../Data/DoctorProfileData";
 import doctorImage from "../../assets/doctor.svg";
 import {
@@ -71,8 +66,8 @@ const DoctorProfile = () => {
   const [appointmentType, setAppointmentType] = useState("video"); // "video" or "onsite"
   const [doctorProfile, setDoctorProfile] = useState(null);
   const [doctor, setDoctor] = useState(null);
-  // Mock data for reviews - must be before any conditional returns
-  const [reviews, setReviews] = useState(initialReviews);
+  // Reviews state - initialized as empty array, will be populated from Firebase if available
+  const [reviews, setReviews] = useState([]);
 
   // Use dynamic data hook
   const { doctors, getDoctorById } = useDoctors();
@@ -202,7 +197,8 @@ const DoctorProfile = () => {
       return [mainClinic];
     }
     
-    return mockClinics;
+    // Return empty array if no clinics available
+    return [];
   }, [doctorProfile]);
 
   // Reset selectedClinic when clinics change
@@ -272,7 +268,7 @@ const DoctorProfile = () => {
     
     // Check if the selected time slot is already booked
     if (bookedSlots.includes(selectedTime)) {
-      alert("هذا الموعد محجوز بالفعل. يرجى اختيار موعد آخر.");
+      alert("This time slot is already booked. Please choose another time.");
       return;
     }
     
@@ -309,7 +305,7 @@ const DoctorProfile = () => {
       });
       
       if (isDuplicate) {
-        alert("هذا الموعد محجوز بالفعل. يرجى اختيار موعد آخر.");
+        alert("This time slot is already booked. Please choose another time.");
         return;
       }
     } catch (error) {
@@ -635,7 +631,7 @@ const DoctorProfile = () => {
                         mb: 3,
                       }}
                     >
-                      {symptoms.map((symptom) => (
+                      {(doctorProfile?.symptoms || []).map((symptom) => (
                         <Chip
                           key={symptom}
                           label={symptom}
@@ -661,7 +657,7 @@ const DoctorProfile = () => {
                         gap: 1,
                       }}
                     >
-                      {services.map((service) => (
+                      {(doctorProfile?.services || []).map((service) => (
                         <Chip
                           key={service}
                           label={service}
@@ -943,7 +939,7 @@ const DoctorProfile = () => {
                         return (
                           <Chip
                             key={slot}
-                            label={isBooked ? `${slot} (محجوز)` : slot}
+                            label={isBooked ? `${slot} (Booked)` : slot}
                             onClick={() => {
                               if (!isBooked) {
                                 setSelectedTime(slot);

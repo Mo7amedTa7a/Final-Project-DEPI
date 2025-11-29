@@ -89,7 +89,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
   const [userRole, setUserRole] = React.useState(null);
   const isLargeScreen = useMediaQuery(theme.breakpoints.up("md"));
 
-  // إغلاق الـ sidebar تلقائياً عند تغيير الصفحة (خاصة للشاشات الصغيرة)
+  // Close sidebar automatically when page changes (especially for small screens)
   React.useEffect(() => {
     if (!isLargeScreen && open) {
       handleDrawerClose();
@@ -98,7 +98,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
   }, [location.pathname]);
 
   React.useEffect(() => {
-    // الحصول على role المستخدم من localStorage
+    // Get user role from localStorage
     const currentUser = localStorage.getItem("CurrentUser");
     if (currentUser) {
       try {
@@ -109,7 +109,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
       }
     }
 
-    // الاستماع لتغييرات localStorage
+    // Listen to localStorage changes
     const handleStorageChange = () => {
       const updatedUser = localStorage.getItem("CurrentUser");
       if (updatedUser) {
@@ -129,7 +129,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
   }, []);
 
   const handleLogout = () => {
-    // حذف المستخدم الحالي فقط وليس كل البيانات
+    // Delete only the current user, not all data
     localStorage.removeItem("CurrentUser");
     setLogoutToast(true);
     setTimeout(() => {
@@ -166,11 +166,11 @@ export default function Sidebar({ open, handleDrawerClose }) {
     icon: React.createElement(iconMap[item.iconName]),
   }));
 
-  // تصفية القائمة بناءً على role المستخدم
+  // Filter menu based on user role
   const mainMenu = allMenuItems.filter((item) => {
-    // إذا لم يكن للعنصر خاصية roles، يظهر للجميع
+    // If item doesn't have roles property, show to everyone
     if (!item.roles) return true;
-    // إذا كان للعنصر خاصية roles، يظهر فقط للـ roles المحددة
+    // If item has roles property, show only to specified roles
     return item.roles.includes(userRole);
   });
 
@@ -182,7 +182,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
 
   return (
     <>
-      {/* Permanent drawer للشاشات الكبيرة */}
+      {/* Permanent drawer for large screens */}
       <Drawer
         variant="permanent"
         open={open}
@@ -207,7 +207,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
                 component={Link}
                 to={path}
                 onClick={() => {
-                  // إغلاق الـ sidebar عند الضغط على أي رابط (خاصة للشاشات الصغيرة)
+                  // Close sidebar when clicking any link (especially for small screens)
                   if (!isLargeScreen) {
                     handleDrawerClose();
                   }
@@ -247,7 +247,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
                     if (action) {
                       action();
                     }
-                    // إغلاق الـ sidebar عند الضغط على أي رابط (خاصة للشاشات الصغيرة)
+                    // Close sidebar when clicking any link (especially for small screens)
                     if (!isLargeScreen && path) {
                       handleDrawerClose();
                     }
@@ -284,7 +284,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
         </Box>
       </Drawer>
 
-      {/* Temporary drawer للشاشات الصغيرة */}
+      {/* Temporary drawer for small screens */}
       <MuiDrawer
         variant="temporary"
         open={open}
@@ -393,7 +393,7 @@ export default function Sidebar({ open, handleDrawerClose }) {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert onClose={handleCloseToast} severity="success" sx={{ width: "100%" }}>
-          تم تسجيل الخروج بنجاح!
+          Logged out successfully!
         </Alert>
       </Snackbar>
     </>

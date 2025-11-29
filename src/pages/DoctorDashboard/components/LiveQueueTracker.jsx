@@ -172,7 +172,7 @@ const LiveQueueTracker = ({ doctorId }) => {
 
   const handleStartNext = async () => {
     if (queueData.waiting.length === 0) {
-      setError("لا يوجد مرضى في الانتظار");
+      setError("No patients waiting");
       return;
     }
 
@@ -230,7 +230,7 @@ const LiveQueueTracker = ({ doctorId }) => {
         window.dispatchEvent(new Event("storage"));
       }
     } catch (err) {
-      setError("حدث خطأ أثناء تحديث الطابور");
+      setError("An error occurred while updating the queue");
     } finally {
       setIsUpdating(false);
     }
@@ -238,7 +238,7 @@ const LiveQueueTracker = ({ doctorId }) => {
 
   const handleCompleteCurrent = async () => {
     if (!queueData.inProgress) {
-      setError("لا يوجد مريض قيد المعالجة حالياً");
+      setError("No patient is currently being treated");
       return;
     }
 
@@ -298,7 +298,7 @@ const LiveQueueTracker = ({ doctorId }) => {
         }
       }
     } catch (err) {
-      setError("حدث خطأ أثناء إكمال الموعد");
+      setError("An error occurred while completing the appointment");
     } finally {
       setIsUpdating(false);
     }
@@ -406,7 +406,7 @@ const LiveQueueTracker = ({ doctorId }) => {
   // Handle starting video meeting
   const handleStartMeeting = async (appointmentId) => {
     if (!appointmentId) {
-      setError("لا يوجد موعد محدد");
+      setError("No appointment specified");
       return;
     }
 
@@ -479,8 +479,8 @@ const LiveQueueTracker = ({ doctorId }) => {
       // Create notification for patient
       const patientNotification = {
         type: "meeting",
-        title: "الميتنج جاهز",
-        message: `الدكتور ${appointment.doctorName} بدأ الميتنج. يمكنك الانضمام الآن.`,
+        title: "Meeting Ready",
+        message: `Dr. ${appointment.doctorName} has started the meeting. You can join now.`,
         patientId: appointment.patientId,
         appointmentId: appointmentId,
         meetingLink: meetingLink,
@@ -503,7 +503,7 @@ const LiveQueueTracker = ({ doctorId }) => {
       // Open meeting in new tab
       window.open(meetingLink, "_blank");
     } catch (err) {
-      setError("حدث خطأ أثناء بدء الميتنج");
+      setError("An error occurred while starting the meeting");
     } finally {
       setIsUpdating(false);
     }
@@ -534,7 +534,7 @@ const LiveQueueTracker = ({ doctorId }) => {
               Live Queue Tracker
             </Typography>
             <Typography variant="body2" sx={{ color: "#757575" }}>
-              متتبع الطابور المباشر
+              Real-time queue tracking
             </Typography>
           </Box>
         </Box>
@@ -560,7 +560,7 @@ const LiveQueueTracker = ({ doctorId }) => {
               }}
             >
               <PlayArrowIcon sx={{ color: "#4CAF50" }} />
-              المريض الحالي
+              Current Patient
             </Typography>
             <Card
               sx={{
@@ -587,15 +587,15 @@ const LiveQueueTracker = ({ doctorId }) => {
                     </Typography>
                     <Typography variant="body2" sx={{ color: "#757575" }}>
                       {queueData.inProgress.appointmentType === "video"
-                        ? "مكالمة فيديو"
-                        : "زيارة عيادة"}
+                        ? "Video Call"
+                        : "Clinic Visit"}
                     </Typography>
                     {queueData.inProgress.reason && (
                       <Typography
                         variant="body2"
                         sx={{ color: "#757575", mt: 0.5 }}
                       >
-                        السبب: {queueData.inProgress.reason}
+                        Reason: {queueData.inProgress.reason}
                       </Typography>
                     )}
                   </Box>
@@ -623,8 +623,8 @@ const LiveQueueTracker = ({ doctorId }) => {
                         }}
                       >
                         {queueData.inProgress.meetingStatus === "started" 
-                          ? "الميتنج مفتوح" 
-                          : "بدء الميتنج"}
+                          ? "Meeting Open" 
+                          : "Start Meeting"}
                       </Button>
                     )}
                     <Button
@@ -643,7 +643,7 @@ const LiveQueueTracker = ({ doctorId }) => {
                         },
                       }}
                     >
-                      كتابة روشته
+                      Write Prescription
                     </Button>
                     <Button
                       variant="contained"
@@ -660,7 +660,7 @@ const LiveQueueTracker = ({ doctorId }) => {
                       {isUpdating ? (
                         <CircularProgress size={20} color="inherit" />
                       ) : (
-                        "إكمال"
+                        "Complete"
                       )}
                     </Button>
                   </Box>
@@ -688,7 +688,7 @@ const LiveQueueTracker = ({ doctorId }) => {
                 {queueData.totalWaiting}
               </Typography>
               <Typography variant="body2" sx={{ color: "#757575" }}>
-                في الانتظار
+                Waiting
               </Typography>
             </Box>
           </Grid>
@@ -708,7 +708,7 @@ const LiveQueueTracker = ({ doctorId }) => {
                 {queueData.inProgress ? 1 : 0}
               </Typography>
               <Typography variant="body2" sx={{ color: "#757575" }}>
-                قيد المعالجة
+                In Progress
               </Typography>
             </Box>
           </Grid>
@@ -728,7 +728,7 @@ const LiveQueueTracker = ({ doctorId }) => {
                 {queueData.completed.length}
               </Typography>
               <Typography variant="body2" sx={{ color: "#757575" }}>
-                مكتمل
+                Completed
               </Typography>
             </Box>
           </Grid>
@@ -758,7 +758,7 @@ const LiveQueueTracker = ({ doctorId }) => {
               {isUpdating ? (
                 <CircularProgress size={20} color="inherit" />
               ) : (
-                `بدء المريض التالي (${queueData.waiting[0]?.patientName})`
+                `Start Next Patient (${queueData.waiting[0]?.patientName})`
               )}
             </Button>
           </Box>
@@ -780,7 +780,7 @@ const LiveQueueTracker = ({ doctorId }) => {
             }}
           >
             <PersonIcon sx={{ color: "#1E88E5" }} />
-            قائمة الانتظار ({queueData.totalWaiting})
+            Waiting Queue ({queueData.totalWaiting})
           </Typography>
 
           {firebaseLoading ? (
@@ -794,7 +794,7 @@ const LiveQueueTracker = ({ doctorId }) => {
             >
               <CircularProgress size={24} sx={{ mb: 1 }} />
               <Typography variant="body2" sx={{ color: "#757575" }}>
-                جاري تحميل البيانات...
+                Loading data...
               </Typography>
             </Box>
           ) : queueData.waiting.length === 0 && !queueData.inProgress && queueData.completed.length === 0 ? (
@@ -807,10 +807,10 @@ const LiveQueueTracker = ({ doctorId }) => {
               }}
             >
               <Typography variant="body1" sx={{ color: "#757575", mb: 0.5 }}>
-                لا يوجد مواعيد اليوم
+                No appointments today
               </Typography>
               <Typography variant="body2" sx={{ color: "#9E9E9E", fontSize: "0.875rem" }}>
-                سيتم عرض المواعيد هنا عند وجود حجوزات لليوم
+                Appointments will be displayed here when there are bookings for today
               </Typography>
             </Box>
           ) : queueData.waiting.length === 0 ? (
@@ -823,7 +823,7 @@ const LiveQueueTracker = ({ doctorId }) => {
               }}
             >
               <Typography variant="body1" sx={{ color: "#757575" }}>
-                لا يوجد مرضى في الانتظار
+                No patients waiting
               </Typography>
             </Box>
           ) : (
@@ -871,8 +871,8 @@ const LiveQueueTracker = ({ doctorId }) => {
                         </Typography>
                         <Typography variant="body2" sx={{ color: "#757575" }}>
                           {patient.appointmentType === "video"
-                            ? "مكالمة فيديو"
-                            : "زيارة عيادة"}
+                            ? "Video Call"
+                            : "Clinic Visit"}
                         </Typography>
                         <Box
                           sx={{
@@ -889,14 +889,14 @@ const LiveQueueTracker = ({ doctorId }) => {
                             variant="body2"
                             sx={{ color: "#757575", fontSize: "0.8rem" }}
                           >
-                            الوقت المتوقع: ~
-                            {calculateEstimatedWaitTime(index + 1)} دقيقة
+                            Estimated Time: ~
+                            {calculateEstimatedWaitTime(index + 1)} minutes
                           </Typography>
                         </Box>
                       </Box>
                       {index === 0 && (
                         <Chip
-                          label="التالي"
+                          label="Next"
                           color="primary"
                           size="small"
                           sx={{ fontWeight: 600 }}
@@ -917,7 +917,7 @@ const LiveQueueTracker = ({ doctorId }) => {
               variant="body2"
               sx={{ color: "#757575", fontStyle: "italic" }}
             >
-              تم إكمال {queueData.completed.length} موعد اليوم
+              Completed {queueData.completed.length} appointment(s) today
             </Typography>
           </Box>
         )}

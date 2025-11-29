@@ -66,7 +66,7 @@ const Header = ({ open, handleDrawerToggle }) => {
   const [notificationAnchor, setNotificationAnchor] = useState(null);
 
   useEffect(() => {
-    // التحقق من وجود بيانات المستخدم الحالي في localStorage
+    // Check if current user data exists in localStorage
     const checkUserLogin = () => {
       const currentUser = localStorage.getItem("CurrentUser");
       if (currentUser) {
@@ -84,17 +84,17 @@ const Header = ({ open, handleDrawerToggle }) => {
 
     checkUserLogin();
 
-    // الاستماع لتغييرات localStorage من نفس النافذة
+    // Listen to localStorage changes from the same window
     const handleStorageChange = (e) => {
       if (e.key === "CurrentUser" || !e.key) {
         checkUserLogin();
       }
     };
 
-    // الاستماع لتغييرات localStorage من نافذة أخرى
+    // Listen to localStorage changes from another window
     window.addEventListener("storage", handleStorageChange);
     
-    // الاستماع لتغييرات localStorage من نفس النافذة (custom event)
+    // Listen to localStorage changes from the same window (custom event)
     const originalSetItem = localStorage.setItem;
     const originalRemoveItem = localStorage.removeItem;
     
@@ -391,7 +391,7 @@ const Header = ({ open, handleDrawerToggle }) => {
         {/* Right Section */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {isLoggedIn ? (
-            // العناصر للمستخدم المسجل
+            // Items for logged-in user
             <>
               <IconButton
                 color="inherit"
@@ -573,7 +573,7 @@ const Header = ({ open, handleDrawerToggle }) => {
               </Box>
             </>
           ) : (
-            // أزرار Login و Register للمستخدم غير المسجل
+            // Login and Register buttons for non-logged-in user
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Button
                 component={Link}

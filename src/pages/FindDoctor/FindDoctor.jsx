@@ -53,7 +53,7 @@ const FindDoctor = () => {
     ).sort();
   }, [doctors]);
 
-  // تصفية الأطباء بناءً على البحث والفلاتر
+  // Filter doctors based on search and filters
   const filteredDoctors = useMemo(() => {
     return doctors.filter((doctor) => {
       // Filter by search term (name or specialty)
@@ -228,7 +228,7 @@ const FindDoctor = () => {
           </FormControl>
         </Box>
 
-        {/* عرض Loader أو عرض الأطباء */}
+        {/* Show Loader or display doctors */}
         {isLoading ? (
           <LoaderInPage />
         ) : (

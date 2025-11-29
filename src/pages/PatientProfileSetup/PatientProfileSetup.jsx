@@ -69,14 +69,14 @@ export default function PatientProfileSetup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // التحقق من الحقول المطلوبة
+    // Validate required fields
     if (!formData.gender || !formData.age) {
       setError("Please fill in all required fields");
       return;
     }
 
     try {
-      // الحصول على بيانات المستخدم الحالي
+      // Get current user data
       const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
       
       if (!currentUser.email) {
@@ -84,7 +84,7 @@ export default function PatientProfileSetup() {
         return;
       }
 
-      // إضافة بيانات الملف الشخصي للمستخدم
+      // Add user profile data
       const patientProfile = {
         profilePicture: formData.profilePicture,
         fullName: currentUser.name,
@@ -96,24 +96,24 @@ export default function PatientProfileSetup() {
         chronicConditions: formData.chronicConditions,
       };
 
-      // تحديث المستخدم في Firebase
+      // Update user in Firebase
       const updatedUser = await FirestoreService.updateUser(currentUser.email, {
         patientProfile: patientProfile,
       });
 
-      // تحديث المستخدم الحالي في localStorage
+      // Update current user in localStorage
       localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
 
       setSuccessToast(true);
       setError("");
 
-      // الانتقال للصفحة الرئيسية بعد الحفظ
+      // Navigate to account page after saving
       setTimeout(() => {
         navigate("/account");
       }, 1500);
     } catch (error) {
       console.error("Error saving patient profile:", error);
-      setError("حدث خطأ أثناء حفظ الملف الشخصي. يرجى المحاولة مرة أخرى.");
+      setError("An error occurred while saving the profile. Please try again.");
     }
   };
 
@@ -302,7 +302,7 @@ export default function PatientProfileSetup() {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
           <Alert onClose={() => setSuccessToast(false)} severity="success" sx={{ width: "100%" }}>
-            تم حفظ الملف الشخصي بنجاح!
+            Profile saved successfully!
           </Alert>
         </Snackbar>
       </Paper>

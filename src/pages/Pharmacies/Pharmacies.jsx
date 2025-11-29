@@ -225,7 +225,7 @@ const Pharmacies = () => {
           </FormControl>
         </Box>
 
-        {/* عرض Loader أثناء تحميل البيانات */}
+        {/* Show Loader while loading data */}
         {isLoading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}>
             <CircularProgress color="primary" />

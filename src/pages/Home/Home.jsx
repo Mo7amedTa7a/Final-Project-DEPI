@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import HeroSection from './HeroSectionComponent/HeroSection';
+import ServicesSection from './ServicesSectionComponent/ServicesSection';
 import DoctorsSection from './DoctorsSectionComponent/DoctorsSection';
 import PharmaciesSection from './PharmaciesSectionComponent/PharmaciesSection';
 
@@ -21,6 +22,7 @@ const Home = () => {
                 governorateFilter={governorateFilter}
                 setGovernorateFilter={setGovernorateFilter}
             />
+            <ServicesSection />
             <div id="search-results">
                 <DoctorsSection 
                     searchTerm={searchTerm}

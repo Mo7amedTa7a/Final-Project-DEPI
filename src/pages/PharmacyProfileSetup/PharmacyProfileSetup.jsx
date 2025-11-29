@@ -198,7 +198,7 @@ export default function PharmacyProfileSetup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // التحقق من الحقول المطلوبة
+    // Validate required fields
     if (
       !formData.pharmacyName ||
       !formData.shortName ||
@@ -213,7 +213,7 @@ export default function PharmacyProfileSetup() {
     }
 
     try {
-      // الحصول على بيانات المستخدم الحالي
+      // Get current user data
       const currentUser = JSON.parse(localStorage.getItem("CurrentUser") || "{}");
       
       if (!currentUser.email) {
@@ -221,7 +221,7 @@ export default function PharmacyProfileSetup() {
         return;
       }
 
-      // إضافة بيانات الملف الشخصي للصيدلية
+      // Add pharmacy profile data
       const pharmacyProfile = {
         profilePicture: formData.profilePicture,
         pharmacyName: formData.pharmacyName,
@@ -235,12 +235,12 @@ export default function PharmacyProfileSetup() {
         products: formData.products || [],
       };
 
-      // تحديث المستخدم في Firebase
+      // Update user in Firebase
       const updatedUser = await FirestoreService.updateUser(currentUser.email, {
         pharmacyProfile: pharmacyProfile,
       });
 
-      // تحديث المستخدم الحالي في localStorage
+      // Update current user in localStorage
       localStorage.setItem("CurrentUser", JSON.stringify(updatedUser));
     } catch (error) {
       if (error.name === "QuotaExceededError") {
@@ -255,7 +255,7 @@ export default function PharmacyProfileSetup() {
     setSuccessToast(true);
     setError("");
 
-    // الانتقال للصفحة الرئيسية بعد الحفظ
+    // Navigate to account page after saving
     setTimeout(() => {
       navigate("/account");
       window.location.reload();
@@ -634,7 +634,7 @@ export default function PharmacyProfileSetup() {
           anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
           <Alert onClose={() => setSuccessToast(false)} severity="success" sx={{ width: "100%" }}>
-            تم حفظ الملف الشخصي بنجاح!
+            Profile saved successfully!
           </Alert>
         </Snackbar>
       </Paper>
