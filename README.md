@@ -1,84 +1,648 @@
-# CureTap Frontend
+# CureTap - منصة طبية متكاملة
 
 واجهة مشروع **CureTap** — منصة متكاملة لتنظيم مواعيد الأطباء، الاستشارات الطبية بالفيديو، وطلب الأدوية من الصيدليات في مكان واحد.
 
 ---
 
-## Tech Stack
-- **React.js** (Create React App)
-- **Bootstrap React**
-- **Material UI (MUI)**
-- **Axios** (للتعامل مع الـ API لاحقًا)
-- **React Router DOM**
-- **Git & GitHub Workflow**
+## 📋 جدول المحتويات
+
+- [نظرة عامة](#نظرة-عامة)
+- [المميزات الرئيسية](#المميزات-الرئيسية)
+- [Tech Stack](#tech-stack)
+- [بنية المشروع](#بنية-المشروع)
+- [دورة حياة المشروع](#دورة-حياة-المشروع)
+- [الأدوات المستخدمة](#الأدوات-المستخدمة)
+- [Git Workflow](#git-workflow)
+- [إعداد المشروع](#إعداد-المشروع)
+- [التشغيل والتطوير](#التشغيل-والتطوير)
+- [البناء والنشر](#البناء-والنشر)
+- [البنية الداخلية](#البنية-الداخلية)
 
 ---
 
-## Git Workflow (Team Rules)
+## 🎯 نظرة عامة
 
->  مهم جدًا الالتزام بالورك فلو دا علشان نضمن إن الـ main دايمًا مستقر.
+**CureTap** هو تطبيق ويب متكامل يوفر منصة شاملة للخدمات الطبية، يتيح للمستخدمين:
 
-### الفروع الأساسية
-- **`main`** → الفرع الرئيسي، ممنوع أي شغل مباشر عليه.
-- **`staging`** → الفرع التجميعي (نختبر عليه كل الفيتشرز قبل ما ندمج للـ main).
+- 🔍 البحث عن الأطباء والصيدليات
+- 📅 حجز المواعيد (على الموقع أو عبر الفيديو)
+- 💊 طلب الأدوية من الصيدليات
+- 📋 إدارة الوصفات الطبية
+- 💬 إجراء استشارات فيديو مع الأطباء
+- 📊 لوحات تحكم مخصصة لكل نوع مستخدم (مريض، طبيب، صيدلية)
 
-### الخطوات الأساسية لكل عضو:
-1. تأكد إنك على آخر نسخة من المشروع:
-   ```bash
-   git checkout staging
-   git pull origin staging
+---
 
-### أنشئ فرع جديد باسم الميزة اللي هتشتغل عليها
+## ✨ المميزات الرئيسية
 
-git checkout -b feature/اسم-الميزة
+### للمرضى (Patients)
+- لوحة تحكم شاملة تعرض المواعيد القادمة والطلبات
+- نظام متابعة الطابور (Queue Tracker) للمواعيد
+- حجز مواعيد مع الأطباء (على الموقع أو فيديو)
+- طلب الأدوية من الصيدليات وإدارة السلة
+- عرض الوصفات الطبية
+- إشعارات فورية للأحداث المهمة
 
+### للأطباء (Doctors)
+- لوحة تحكم لإدارة المواعيد والمرضى
+- نظام إدارة الطابور المباشر (Live Queue Tracker)
+- إصدار الوصفات الطبية
+- بدء مكالمات الفيديو مع المرضى
+- عرض معلومات المرضى وتاريخهم الطبي
 
-### اشتغل على الكود، وبعد الانتهاء 
+### للصيدليات (Pharmacies)
+- لوحة تحكم لإدارة المنتجات والأدوية
+- إدارة الطلبات وتتبع حالة التوصيل
+- عرض ملف الصيدلية والمراجعات
+- إدارة المخزون
 
-- git add .
-- git commit -m "Add: وصف التعديل"
-- git push origin feature/اسم-الميزة
+---
 
+## 🛠️ Tech Stack
 
-### روح على GitHub → اعمل Pull Request (PR) من feature/... إلى staging.
+### Frontend Framework & Libraries
+- **React.js 19.1.1** - مكتبة JavaScript لبناء واجهات المستخدم
+- **React Router DOM 7.9.5** - إدارة التوجيه والتنقل بين الصفحات
+- **Vite 7.1.7** - Build tool سريع وحديث (بديل Create React App)
 
-بعد المراجعة والموافقة، بنعمل Merge للـ staging.
+### UI Libraries
+- **Material-UI (MUI) 7.3.5** - مكتبة مكونات UI جاهزة
+  - `@mui/material` - المكونات الأساسية
+  - `@mui/icons-material` - الأيقونات
+  - `@emotion/react` & `@emotion/styled` - للـ styling
+- **Bootstrap 5.3.8** - إطار عمل CSS
+- **React Bootstrap 2.10.10** - مكونات Bootstrap لـ React
 
-عند انتهاء المشروع بالكامل، نعمل Merge من staging إلى main.
+### State Management
+- **Redux Toolkit 2.10.1** - إدارة الحالة العامة للتطبيق
+- **React Redux 9.2.0** - ربط React مع Redux
 
-## Team Workflow Example
+### Backend & Database
+- **Firebase 12.6.0** - منصة Google للخدمات السحابية
+  - **Firestore** - قاعدة بيانات NoSQL في الوقت الفعلي
+  - **Firebase Auth** - نظام المصادقة
+  - **Firebase Analytics** - تحليلات الاستخدام
 
-| الاسم        | الفرع                      | المهمة                          |
-|--------------|----------------------------|----------------------------------|
-| محمد         | `feature/navbar`           | إنشاء Navbar بالـ MUI            |
-| ياسين        | `feature/login`            | صفحة تسجيل الدخول                |
-| عمر          | `feature/doctor-profile`   | بروفايل الدكتور                  |
+### HTTP & API
+- **Axios 1.13.2** - مكتبة HTTP للتعامل مع APIs
 
+### Additional Libraries
+- **Swiper 12.0.3** - مكتبة للـ carousels والـ sliders
+- **Lottie React 2.4.1** - عرض الرسوم المتحركة
 
-# Project Setup
+### Development Tools
+- **ESLint 9.36.0** - فحص جودة الكود
+- **Vite Plugin React 5.0.4** - دعم React في Vite
+- **Babel Plugin React Compiler** - تحسين أداء React
 
-1. Clone the repo
+---
+
+## 📁 بنية المشروع
+
+```
+Final-Project-DEPI/
+├── public/                 # الملفات الثابتة
+│   ├── _redirects         # إعدادات إعادة التوجيه (Netlify)
+│   └── vite.svg
+├── src/
+│   ├── assets/            # الصور والملفات الثابتة
+│   ├── components/        # المكونات المشتركة
+│   │   ├── Header/       # رأس الصفحة
+│   │   ├── Footer/       # تذييل الصفحة
+│   │   ├── SideBar/      # القائمة الجانبية
+│   │   ├── MainLayout/   # التخطيط الرئيسي
+│   │   ├── AuthLayout/   # تخطيط صفحات المصادقة
+│   │   ├── ProtectedRoute/ # حماية المسارات
+│   │   └── Loader/       # مؤشرات التحميل
+│   ├── pages/            # صفحات التطبيق
+│   │   ├── Home/         # الصفحة الرئيسية
+│   │   ├── Login/        # تسجيل الدخول
+│   │   ├── Signup/       # التسجيل
+│   │   ├── PatientDashboard/    # لوحة تحكم المريض
+│   │   ├── DoctorDashboard/      # لوحة تحكم الطبيب
+│   │   ├── PharmacyDashboard/    # لوحة تحكم الصيدلية
+│   │   ├── FindDoctor/           # البحث عن الأطباء
+│   │   ├── DoctorProfile/        # ملف الطبيب
+│   │   ├── Pharmacies/           # قائمة الصيدليات
+│   │   ├── PharmacyProfile/      # ملف الصيدلية
+│   │   ├── Checkout/             # صفحة الدفع
+│   │   ├── Cart/                 # سلة التسوق
+│   │   ├── Orders/               # الطلبات
+│   │   ├── Prescriptions/        # الوصفات الطبية
+│   │   ├── VideoCall/            # مكالمات الفيديو
+│   │   ├── Notifications/        # الإشعارات
+│   │   └── Wallet/               # المحفظة
+│   ├── services/         # الخدمات
+│   │   ├── FirestoreService.js  # خدمة Firestore
+│   │   └── DataService.js       # خدمة البيانات
+│   ├── hooks/             # Custom Hooks
+│   │   ├── useData.js           # Hook للبيانات
+│   │   └── useDataManager.js    # Hook لإدارة البيانات
+│   ├── router/            # إعدادات التوجيه
+│   │   └── Routes.jsx
+│   ├── firebase/          # إعدادات Firebase
+│   │   └── config.js
+│   ├── utils/             # دوال مساعدة
+│   │   └── queueUtils.js  # دوال إدارة الطابور
+│   ├── Data/              # البيانات الثابتة
+│   ├── Theme/             # إعدادات الثيم
+│   ├── App.jsx            # المكون الرئيسي
+│   ├── main.jsx           # نقطة الدخول
+│   └── index.css          # الأنماط العامة
+├── dist/                  # ملفات البناء (يتم إنشاؤها تلقائياً)
+├── node_modules/         # المكتبات المثبتة
+├── .gitignore           # ملفات Git المستثناة
+├── package.json         # إعدادات المشروع والمكتبات
+├── vite.config.js       # إعدادات Vite
+├── eslint.config.js     # إعدادات ESLint
+├── firestore.rules      # قواعد أمان Firestore
+├── netlify.toml         # إعدادات النشر على Netlify
+├── FIREBASE_SETUP.md    # دليل إعداد Firebase
+└── README.md            # هذا الملف
+```
+
+---
+
+## 🔄 دورة حياة المشروع (Development Lifecycle)
+
+### 1. التخطيط والتصميم (Planning & Design)
+- تحديد المتطلبات والوظائف
+- تصميم واجهات المستخدم (UI/UX)
+- تحديد بنية البيانات في Firestore
+- تقسيم المهام على أعضاء الفريق
+
+### 2. إعداد البيئة (Environment Setup)
+```bash
+# Clone المشروع
 git clone https://github.com/Mo7amedTa7a/Final-Project-DEPI.git
 
-2. Install dependencies
+# تثبيت المكتبات
 npm install
 
-3. Run the project
-npm run dev
+# إعداد Firebase (راجع FIREBASE_SETUP.md)
+# إنشاء ملف .env وإضافة مفاتيح Firebase
+```
 
+### 3. التطوير (Development)
+- إنشاء فرع جديد للميزة: `git checkout -b feature/feature-name`
+- تطوير الميزة باستخدام React و MUI
+- استخدام FirestoreService للتعامل مع البيانات
+- اختبار الميزة محلياً
 
+### 4. الاختبار (Testing)
+- اختبار الوظائف يدوياً
+- التحقق من التوافق مع المتصفحات
+- اختبار التكامل مع Firebase
 
-# لاحظ
-### كل واحد في الفريق يعمل  
+### 5. المراجعة (Code Review)
+- إنشاء Pull Request على GitHub
+- مراجعة الكود من قبل أعضاء الفريق
+- حل أي تعليقات أو مشاكل
 
+### 6. الدمج (Merging)
+- دمج الفرع في `staging`
+- اختبار شامل على `staging`
+- دمج `staging` في `main` عند الاستقرار
+
+### 7. البناء (Build)
+```bash
+npm run build
+# إنشاء مجلد dist/ مع الملفات المحسّنة
+```
+
+### 8. النشر (Deployment)
+- رفع الملفات إلى Netlify أو Firebase Hosting
+- إعداد متغيرات البيئة
+- التحقق من عمل التطبيق في الإنتاج
+
+### 9. المراقبة والصيانة (Monitoring & Maintenance)
+- مراقبة الأخطاء والأداء
+- جمع ملاحظات المستخدمين
+- إصلاح المشاكل وإضافة ميزات جديدة
+
+---
+
+## 🛠️ الأدوات المستخدمة
+
+### أدوات التطوير (Development Tools)
+- **VS Code** - محرر الكود
+- **Git** - إدارة الإصدارات
+- **GitHub** - مستودع الكود والتعاون
+- **npm** - مدير الحزم
+
+### أدوات البناء (Build Tools)
+- **Vite** - Build tool سريع
+  - Hot Module Replacement (HMR) - تحديث فوري للكود
+  - Code Splitting - تقسيم الكود تلقائياً
+  - Tree Shaking - إزالة الكود غير المستخدم
+
+### أدوات الجودة (Quality Tools)
+- **ESLint** - فحص جودة الكود
+  - قواعد React Hooks
+  - قواعد React Refresh
+  - فحص المتغيرات غير المستخدمة
+
+### أدوات النشر (Deployment Tools)
+- **Netlify** - استضافة التطبيق
+  - Continuous Deployment من GitHub
+  - إعادة التوجيه التلقائي (SPA routing)
+- **Firebase Hosting** - بديل للاستضافة
+
+### أدوات قاعدة البيانات
+- **Firebase Console** - إدارة Firestore
+- **Firestore Rules** - قواعد الأمان
+
+### أدوات التصميم
+- **Material-UI** - مكونات UI جاهزة
+- **Bootstrap** - نظام Grid والتصميم
+
+---
+
+##  Git Workflow (Team Rules)
+
+>  **مهم جداً**: الالتزام بالورك فلو هذا لضمان استقرار `main`.
+
+### الفروع الأساسية
+
+| الفرع | الوصف | الاستخدام |
+|------|------|----------|
+| `main` | الفرع الرئيسي | ممنوع العمل مباشرة عليه - فقط للنسخ النهائية المستقرة |
+| `staging` | الفرع التجميعي | نختبر عليه كل الميزات قبل الدمج في `main` |
+
+### الخطوات الأساسية لكل عضو
+
+#### 1. الحصول على آخر نسخة
+```bash
+git checkout staging
+git pull origin staging
+```
+
+#### 2. إنشاء فرع جديد للميزة
+```bash
+git checkout -b feature/اسم-الميزة
+# أمثلة:
+# git checkout -b feature/navbar
+# git checkout -b feature/login
+# git checkout -b feature/doctor-profile
+```
+
+#### 3. العمل على الكود
+- تطوير الميزة
+- إضافة الملفات والتعديلات
+- اختبار محلياً
+
+#### 4. حفظ التغييرات (Commit)
+```bash
+git add .
+git commit -m "Add: وصف التعديل"
+# أمثلة:
+# git commit -m "Add: إنشاء Navbar بالـ MUI"
+# git commit -m "Fix: إصلاح مشكلة في تسجيل الدخول"
+# git commit -m "Update: تحديث تصميم Doctor Profile"
+```
+
+#### 5. رفع التغييرات (Push)
+```bash
+git push origin feature/اسم-الميزة
+```
+
+#### 6. إنشاء Pull Request
+- اذهب إلى GitHub
+- اضغط على "New Pull Request"
+- اختر من `feature/اسم-الميزة` إلى `staging`
+- اكتب وصفاً واضحاً للميزة
+- انتظر المراجعة والموافقة
+
+#### 7. الدمج (Merge)
+- بعد الموافقة على PR، يتم الدمج في `staging`
+- عند انتهاء المشروع، يتم الدمج من `staging` إلى `main`
+
+### أمثلة على أسماء الفروع
+```
+feature/navbar              # ميزة جديدة
+feature/login               # ميزة جديدة
+feature/doctor-profile      # ميزة جديدة
+fix/cart-bug               # إصلاح مشكلة
+update/pharmacy-dashboard  # تحديث ميزة موجودة
+```
+
+### مثال على Workflow الفريق
+
+| الاسم | الفرع | المهمة | الحالة |
+|------|------|--------|--------|
+| محمد | `feature/navbar` | إنشاء Navbar بالـ MUI |  مكتمل |
+| ياسين | `feature/login` | صفحة تسجيل الدخول |  قيد العمل |
+| عمر | `feature/doctor-profile` | بروفايل الدكتور |  مخطط |
+
+---
+
+##  إعداد المشروع
+
+### المتطلبات الأساسية
+- **Node.js** (الإصدار 18 أو أحدث)
+- **npm** أو **yarn**
+- حساب **Firebase** (مجاني)
+- حساب **GitHub**
+
+### خطوات الإعداد
+
+#### 1. Clone المشروع
+```bash
 git clone https://github.com/Mo7amedTa7a/Final-Project-DEPI.git
+cd Final-Project-DEPI
+```
 
+#### 2. تثبيت المكتبات
+```bash
+npm install
+```
 
-### وبعدين لما يشتغلوا على برانش خاص بيهم
+#### 3. إعداد Firebase
 
-git checkout -b feature/feature-name
+**أ) إنشاء ملف `.env` في جذر المشروع:**
+```env
+VITE_FIREBASE_API_KEY=your_api_key_here
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
+VITE_FIREBASE_PROJECT_ID=your_project_id_here
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket_here
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id_here
+VITE_FIREBASE_APP_ID=your_app_id_here
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id_here
+```
 
+**ب) إعداد Firestore:**
+1. اذهب إلى [Firebase Console](https://console.firebase.google.com/)
+2. أنشئ مشروع جديد أو استخدم مشروع موجود
+3. فعّل **Firestore Database**
+4. اختر **Start in test mode** (للبداية)
+5. انسخ محتوى `firestore.rules` إلى قواعد Firestore
 
-### وبعد ما يخلص 
+**ج) تفعيل Authentication (اختياري):**
+1. في Firebase Console، اذهب إلى **Authentication**
+2. اضغط **Get Started**
+3. فعّل **Email/Password** provider
 
-git push origin feature/feature-name
+#### 4. التحقق من الإعداد
+```bash
+# التحقق من تثبيت المكتبات
+npm list --depth=0
+
+# التحقق من ملفات الإعداد
+ls -la .env
+ls -la src/firebase/config.js
+```
+
+---
+
+##  التشغيل والتطوير
+
+### وضع التطوير (Development Mode)
+```bash
+npm run dev
+```
+- يفتح التطبيق على `http://localhost:5173`
+- Hot Module Replacement (HMR) مفعّل - التغييرات تظهر فوراً
+- لا يتم تحسين الكود (أسرع للبناء)
+
+### معاينة البناء (Preview Build)
+```bash
+npm run build
+npm run preview
+```
+- يبني المشروع أولاً
+- يعرض النسخة المحسّنة محلياً
+
+### فحص الكود (Linting)
+```bash
+npm run lint
+```
+- يفحص الكود بحثاً عن الأخطاء والمشاكل
+- يتحقق من اتباع أفضل الممارسات
+
+---
+
+##  البناء والنشر
+
+### بناء المشروع (Build)
+```bash
+npm run build
+```
+- ينشئ مجلد `dist/` مع الملفات المحسّنة
+- يتم تحسين الكود (Minification, Tree Shaking)
+- تقسيم الكود تلقائياً (Code Splitting)
+
+### النشر على Netlify
+
+#### الطريقة الأولى: من GitHub (مستمر)
+1. اربط حساب GitHub مع Netlify
+2. اختر المستودع `Final-Project-DEPI`
+3. إعدادات البناء:
+   - **Build command**: `npm run build`
+   - **Publish directory**: `dist`
+4. أضف متغيرات البيئة (Environment Variables):
+   - `VITE_FIREBASE_API_KEY`
+   - `VITE_FIREBASE_AUTH_DOMAIN`
+   - `VITE_FIREBASE_PROJECT_ID`
+   - ... إلخ
+5. اضغط **Deploy**
+
+#### الطريقة الثانية: من سطر الأوامر
+```bash
+# تثبيت Netlify CLI
+npm install -g netlify-cli
+
+# تسجيل الدخول
+netlify login
+
+# النشر
+netlify deploy --prod
+```
+
+### النشر على Firebase Hosting
+```bash
+# تثبيت Firebase CLI
+npm install -g firebase-tools
+
+# تسجيل الدخول
+firebase login
+
+# تهيئة المشروع
+firebase init hosting
+
+# البناء والنشر
+npm run build
+firebase deploy --only hosting
+```
+
+---
+
+##  البنية الداخلية
+
+### إدارة الحالة (State Management)
+
+#### 1. Local State (useState)
+```javascript
+// في المكونات
+const [count, setCount] = useState(0);
+```
+
+#### 2. Global State (Redux)
+```javascript
+// في Redux Store
+const store = configureStore({
+  reducer: {
+    // reducers هنا
+  }
+});
+```
+
+#### 3. Firebase Real-time (FirestoreService)
+```javascript
+// الاشتراك في التحديثات الفورية
+const unsubscribe = FirestoreService.subscribe(
+  "appointments",
+  (data) => setAppointments(data)
+);
+```
+
+### إدارة البيانات
+
+#### FirestoreService
+- خدمة مركزية للتعامل مع Firestore
+- دعم Real-time updates
+- معالجة الأخطاء تلقائياً
+- تحويل Timestamps
+
+#### Custom Hooks
+- `useData.js` - للبيانات من Firestore
+- `useDataManager.js` - لإدارة البيانات المحلية (localStorage)
+
+### التوجيه (Routing)
+
+#### React Router
+- Lazy Loading للمكونات (تحسين الأداء)
+- Protected Routes (حماية المسارات)
+- Dynamic Routes (مسارات ديناميكية)
+
+```javascript
+// مثال من Routes.jsx
+{
+  path: "doctor/:id",
+  Component: () => (
+    <Suspense fallback={<Loader />}>
+      <DoctorProfileLazy />
+    </Suspense>
+  )
+}
+```
+
+### المكونات (Components)
+
+#### Layout Components
+- `MainLayout` - التخطيط الرئيسي (Header + Sidebar + Content)
+- `AuthLayout` - تخطيط صفحات المصادقة
+
+#### Shared Components
+- `Header` - رأس الصفحة مع البحث والإشعارات
+- `SideBar` - القائمة الجانبية
+- `Footer` - تذييل الصفحة
+- `Loader` - مؤشرات التحميل
+- `ProtectedRoute` - حماية المسارات
+
+### الصفحات (Pages)
+
+#### صفحات المصادقة
+- `Login` - تسجيل الدخول
+- `Signup` - التسجيل
+- `PatientProfileSetup` - إعداد ملف المريض
+- `DoctorProfileSetup` - إعداد ملف الطبيب
+- `PharmacyProfileSetup` - إعداد ملف الصيدلية
+
+#### صفحات المستخدمين
+- `PatientDashboard` - لوحة تحكم المريض
+- `DoctorDashboard` - لوحة تحكم الطبيب
+- `PharmacyDashboard` - لوحة تحكم الصيدلية
+
+#### صفحات الخدمات
+- `FindDoctor` - البحث عن الأطباء
+- `DoctorProfile` - ملف الطبيب
+- `Pharmacies` - قائمة الصيدليات
+- `PharmacyProfile` - ملف الصيدلية
+- `VideoCall` - مكالمات الفيديو
+
+#### صفحات التجارة
+- `Cart` - سلة التسوق
+- `Checkout` - صفحة الدفع
+- `Orders` - الطلبات
+- `Prescriptions` - الوصفات الطبية
+
+### الخدمات (Services)
+
+#### FirestoreService
+```javascript
+// أمثلة على الاستخدام
+// الحصول على البيانات
+const users = await FirestoreService.get("users");
+
+// إضافة بيانات
+await FirestoreService.add("appointments", appointmentData);
+
+// تحديث بيانات
+await FirestoreService.update("users", userId, updatedData);
+
+// الاشتراك في التحديثات
+FirestoreService.subscribe("appointments", callback);
+```
+
+### الأدوات المساعدة (Utils)
+
+#### queueUtils.js
+- `normalizeAppointment()` - توحيد بيانات المواعيد
+- `calculateEstimatedWaitTime()` - حساب وقت الانتظار
+- `sortAppointmentsByBookingTime()` - ترتيب المواعيد
+
+---
+
+##  ملاحظات مهمة
+
+### الأمان
+-  ملف `.env` يجب أن يكون في `.gitignore`
+-  لا ترفع مفاتيح Firebase إلى Git
+-  قواعد Firestore الحالية للاختبار فقط - يجب تحديثها للإنتاج
+
+### الأداء
+- استخدام Lazy Loading للمكونات
+- Code Splitting تلقائي مع Vite
+- تحسين الصور والأصول
+
+### أفضل الممارسات
+- استخدام `useCallback` و `useMemo` لتقليل إعادة التصيير
+- تنظيف الاشتراكات في `useEffect`
+- معالجة الأخطاء بشكل صحيح
+
+---
+
+##  المساهمة
+
+### للمساهمة في المشروع:
+1. Fork المشروع
+2. أنشئ فرع للميزة: `git checkout -b feature/AmazingFeature`
+3. Commit التغييرات: `git commit -m 'Add: AmazingFeature'`
+4. Push للفرع: `git push origin feature/AmazingFeature`
+5. افتح Pull Request
+
+---
+
+##  الترخيص
+
+هذا المشروع جزء من مشروع تخرج DEPI.
+
+---
+
+##  التواصل
+
+للاستفسارات والدعم، يرجى التواصل مع الفريق.
+
+---
+
+**تم التحديث**: آخر تحديث - 2025

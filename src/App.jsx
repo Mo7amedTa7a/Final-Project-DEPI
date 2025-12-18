@@ -1,12 +1,6 @@
-import { Typography } from "@mui/material";
-import "./App.css";
+import { RouterProvider } from "react-router";
+import { Routes } from "./router/Routes";
 
-function App () {
-    return (
-      <div>
-        <Typography variant="h1" color="primary">Hello, World!</Typography>
-      </div>
-    )
+export default function App() {
+  return <RouterProvider router={Routes} />;
 }
-
-export default App;
